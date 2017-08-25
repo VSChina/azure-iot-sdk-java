@@ -27,6 +27,7 @@ public class MqttIotHubConnection
 
     private String iotHubUserName;
     private String iotHubUserPassword;
+    private MqttConnection mqttConnection;
 
     //string constants
     private static final String WS_SSL_PREFIX = "wss://";
@@ -109,7 +110,8 @@ public class MqttIotHubConnection
 
             // Codes_SRS_MQTTIOTHUBCONNECTION_15_004: [The function shall establish an MQTT connection
             // with an IoT Hub using the provided host name, user name, device ID, and sas token.]
-            try {
+            try
+            {
                 IotHubSasToken sasToken = new IotHubSasToken(this.config, System.currentTimeMillis() / 1000L +
                         this.config.getTokenValidSecs() + 1L);
                 this.iotHubUserPassword = sasToken.toString();
@@ -121,19 +123,21 @@ public class MqttIotHubConnection
                 {
                     //Codes_SRS_MQTTIOTHUBCONNECTION_25_018: [The function shall establish an MQTT WS connection with a server uri as wss://<hostName>/$iothub/websocket?iothub-no-client-cert=true if websocket was enabled.]
                     final String wsServerUri = WS_SSL_PREFIX + this.config.getIotHubHostname() + WEBSOCKET_RAW_PATH + WEBSOCKET_QUERY ;
-                    this.deviceMessaging = new MqttMessaging(wsServerUri,
-                            this.config.getDeviceId(), this.iotHubUserName, this.iotHubUserPassword, this.config.getIotHubSSLContext());
+                    mqttConnection = new MqttConnection(wsServerUri,
+                            this.config.getDeviceId(), this.iotHubUserName, this.iotHubUserPassword, this.config.getIotHubSSLContext().getIotHubSSlContext());
                 }
                 else
                 {
                     //Codes_SRS_MQTTIOTHUBCONNECTION_25_019: [The function shall establish an MQTT connection with a server uri as ssl://<hostName>:8883 if websocket was not enabled.]
                     final String serverUri = SSL_PREFIX + this.config.getIotHubHostname() + SSL_PORT_SUFFIX;
-                    this.deviceMessaging = new MqttMessaging(serverUri,
-                            this.config.getDeviceId(), this.iotHubUserName, this.iotHubUserPassword, this.config.getIotHubSSLContext());
+                    mqttConnection = new MqttConnection(serverUri,
+                            this.config.getDeviceId(), this.iotHubUserName, this.iotHubUserPassword, this.config.getIotHubSSLContext().getIotHubSSlContext());
                 }
 
-                this.deviceMethod = new MqttDeviceMethod();
-                this.deviceTwin = new MqttDeviceTwin();
+                this.deviceMessaging = new MqttMessaging(mqttConnection, this.config.getDeviceId());
+                mqttConnection.setMqttCallback(this.deviceMessaging);
+                this.deviceMethod = new MqttDeviceMethod(mqttConnection);
+                this.deviceTwin = new MqttDeviceTwin(mqttConnection);
                 
                 // Codes_SRS_MQTTIOTHUBCONNECTION_99_017 : [The function shall set DeviceClientConfig object needed for SAS token renewal.]
                 this.deviceMessaging.setDeviceClientConfig(this.config);

@@ -8,6 +8,7 @@ import com.microsoft.azure.sdk.iot.device.IotHubSSLContext;
 import com.microsoft.azure.sdk.iot.device.Message;
 import com.microsoft.azure.sdk.iot.device.MessageProperty;
 import com.microsoft.azure.sdk.iot.device.transport.mqtt.Mqtt;
+import com.microsoft.azure.sdk.iot.device.transport.mqtt.MqttConnection;
 import com.microsoft.azure.sdk.iot.device.transport.mqtt.MqttMessaging;
 import mockit.*;
 import org.junit.Test;
@@ -20,22 +21,22 @@ import static org.junit.Assert.assertNotNull;
 /* Unit tests for MqttMessaging
  * Code coverage: 100% methods, 94% lines
  */
-public class MqttMessagingTest {
-
-    final String serverUri = "test.host.name";
-    final String clientId = "test.iothub";
-    final String userName = "test-deviceId";
-    final String password = "test-devicekey?&test";
-    final String mockParseTopic = "testTopic";
+public class MqttMessagingTest
+{
+    private final String clientId = "test.iothub";
+    private final String mockParseTopic = "testTopic";
 
     @Mocked
-    IOException mockIOException;
+    private IOException mockIOException;
 
     @Mocked
-    Message mockMessage;
+    private Message mockMessage;
 
     @Mocked
-    IotHubSSLContext mockIotHubSSLContext;
+    private IotHubSSLContext mockIotHubSSLContext;
+
+    @Mocked
+    private MqttConnection mockedMqttConnection;
 
     /*
     **Tests_SRS_MqttMessaging_25_002: [**The constructor shall use the configuration to instantiate super class and passing the parameters.**]**
@@ -47,7 +48,7 @@ public class MqttMessagingTest {
     public void constructorCallsBaseConstructorWithArguments(@Mocked final Mqtt mockMqtt) throws IOException
     {
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
 
         String actualPublishTopic = Deencapsulation.getField(testMqttMessaging, "publishTopic");
         assertNotNull(actualPublishTopic);
@@ -60,12 +61,11 @@ public class MqttMessagingTest {
     /*
     **Tests_SRS_MqttMessaging_25_001: [**The constructor shall throw InvalidParameter Exception if any of the parameters are null or empty .**]**
      */
-    @Test (expected = InvalidParameterException.class)
-    public void constructorFailsIfAnyOfTheParametersAreNull() throws IOException
+    @Test (expected = IllegalArgumentException.class)
+    public void constructorFailsIfMqttConnectionIsNull() throws IOException
     {
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(null, clientId, userName, password, mockIotHubSSLContext);
-
+        MqttMessaging testMqttMessaging = new MqttMessaging(null, clientId);
     }
 
     /*
@@ -73,11 +73,17 @@ public class MqttMessagingTest {
      */
 
     @Test (expected = InvalidParameterException.class)
-    public void constructorFailsIfAnyOfTheParametersAreEmpty() throws IOException
+    public void constructorFailsIfDeviceIDIsEmpty() throws IOException
     {
 
-        MqttMessaging testMqttMessaging = new MqttMessaging("", clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, "");
+    }
 
+    @Test (expected = InvalidParameterException.class)
+    public void constructorFailsIfDeviceIDIsNull() throws IOException
+    {
+
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, null);
     }
 
     /*
@@ -97,7 +103,7 @@ public class MqttMessagingTest {
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
 
         testMqttMessaging.start();
         new Verifications()
@@ -123,7 +129,7 @@ public class MqttMessagingTest {
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
         testMqttMessaging.start();
 
         new Verifications()
@@ -151,7 +157,7 @@ public class MqttMessagingTest {
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
         testMqttMessaging.start();
 
         new Verifications()
@@ -173,17 +179,16 @@ public class MqttMessagingTest {
     **Tests_SRS_MqttMessaging_25_023: [**stop method shall be call restartBaseMqtt to tear down a the base class even if disconnect fails.**]**
      */
     @Test
-    public void stopCallsDisconnectAndRestartBase(@Mocked final Mqtt mockMqtt) throws IOException
+    public void stopCallsDisconnect(@Mocked final Mqtt mockMqtt) throws IOException
     {
         new NonStrictExpectations()
         {
             {
                 Deencapsulation.invoke(mockMqtt, "disconnect");
-                mockMqtt.restartBaseMqtt();
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
         testMqttMessaging.start();
         testMqttMessaging.stop();
 
@@ -192,16 +197,12 @@ public class MqttMessagingTest {
             {
                 Deencapsulation.invoke(mockMqtt, "disconnect");
                 times = 1;
-                mockMqtt.restartBaseMqtt();
-                times = 1;
-
             }
         };
-
     }
 
     @Test (expected = IOException.class)
-    public void stopCallsRestartBaseEvenIfDisconnectFailsAndThrowsIOException(@Mocked final Mqtt mockMqtt) throws IOException
+    public void stopIfDisconnectFailsThrowsIOException(@Mocked final Mqtt mockMqtt) throws IOException
     {
         new StrictExpectations()
         {
@@ -210,11 +211,10 @@ public class MqttMessagingTest {
                 Deencapsulation.invoke(mockMqtt, "subscribe", anyString);
                 Deencapsulation.invoke(mockMqtt, "disconnect");
                 result = mockIOException;
-                mockMqtt.restartBaseMqtt();
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
         testMqttMessaging.start();
         testMqttMessaging.stop();
 
@@ -223,12 +223,8 @@ public class MqttMessagingTest {
             {
                 Deencapsulation.invoke(mockMqtt, "disconnect");
                 times = 1;
-                mockMqtt.restartBaseMqtt();
-                times = 1;
-
             }
         };
-
     }
 
     /*
@@ -247,7 +243,7 @@ public class MqttMessagingTest {
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);;
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);;
         testMqttMessaging.send(mockMessage);
 
         new Verifications()
@@ -274,11 +270,10 @@ public class MqttMessagingTest {
                 result = messageBody;
                 Deencapsulation.invoke(mockMqtt, "publish", anyString, messageBody);
                 result = mockIOException;
-
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);;
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);;
         testMqttMessaging.send(null);
 
         new Verifications()
@@ -288,10 +283,8 @@ public class MqttMessagingTest {
                 times = 1;
                 Deencapsulation.invoke(mockMqtt, "publish", mockParseTopic,  new byte[1]);
                 times = 1;
-
             }
         };
-
     }
 
     /*
@@ -301,7 +294,7 @@ public class MqttMessagingTest {
     public void sendShallThrowIOExceptionIfMessageIsNull(@Mocked final Mqtt mockMqtt) throws IOException
     {
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);;
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);;
         testMqttMessaging.send(null);
 
         new Verifications()
@@ -311,7 +304,6 @@ public class MqttMessagingTest {
                 times = 0;
                 Deencapsulation.invoke(mockMqtt, "publish", mockParseTopic,  new byte[1]);
                 times = 0;
-
             }
         };
     }
@@ -346,7 +338,7 @@ public class MqttMessagingTest {
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);
 
         // act
         testMqttMessaging.send(mockMessage);
@@ -392,7 +384,7 @@ public class MqttMessagingTest {
             }
         };
 
-        MqttMessaging testMqttMessaging = new MqttMessaging(serverUri, clientId, userName, password, mockIotHubSSLContext);;
+        MqttMessaging testMqttMessaging = new MqttMessaging(mockedMqttConnection, clientId);;
         testMqttMessaging.send(mockMessage);
         final String publishTopicWithProperties = String.format(
                 "devices/%s/messages/events/$.mid=%s&%s=%s", clientId, messageidValue, propertyName, propertyValue);

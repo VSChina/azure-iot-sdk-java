@@ -176,6 +176,7 @@ public final class DeviceClient implements Closeable
      */
     private void commonConstructorSetup(String connString, IotHubClientProtocol protocol, String publicKeyCertificate, boolean isPathForPublic, String privateKey, boolean isPathForPrivate) throws IOException, IllegalArgumentException, SecurityException
     {
+        //TODO need to verifiy connection string for using x509 has certs and that non-x509 strings yada yada yada
         if (connString == null || connString.isEmpty())
         {
             throw new IllegalArgumentException("Connection string cannot be null or empty");

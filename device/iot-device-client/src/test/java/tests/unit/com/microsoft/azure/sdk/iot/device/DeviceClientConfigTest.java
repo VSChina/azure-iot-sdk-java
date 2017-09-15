@@ -4,17 +4,18 @@
 package tests.unit.com.microsoft.azure.sdk.iot.device;
 
 import com.microsoft.azure.sdk.iot.device.DeviceClientConfig;
-import com.microsoft.azure.sdk.iot.device.IotHubConnectionString;
-import com.microsoft.azure.sdk.iot.device.IotHubSSLContext;
 import com.microsoft.azure.sdk.iot.device.MessageCallback;
-import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
-import mockit.Deencapsulation;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
-import mockit.Verifications;
+import com.microsoft.azure.sdk.iot.device.auth.*;
+import mockit.*;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
@@ -22,14 +23,20 @@ import static org.junit.Assert.*;
 /**
  * Unit tests for deviceClientConfig.
  * Methods: 96%
- * Lines: 90%
+ * Lines: 95%
  */
 public class DeviceClientConfigTest
 {
+    @Mocked IotHubSasTokenAuthentication mockSasTokenAuthentication;
+    @Mocked IotHubX509Authentication mockX509Authentication;
+
+    private static final String publicKeyCert = "someCert";
+    private static final String privateKey = "someKey";
+
     // Tests_SRS_DEVICECLIENTCONFIG_11_002: [The function shall return the IoT Hub hostname given in the constructor.]
     @Test
     public void getIotHubHostnameReturnsIotHubHostname()
-            throws URISyntaxException
+            throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -42,6 +49,16 @@ public class DeviceClientConfigTest
                         deviceId,
                         deviceKey,
                         sharedAccessToken);
+
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getConnectionString().getHostName();
+                result = iotHubHostname;
+            }
+        };
 
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
         String testIotHubHostname = config.getIotHubHostname();
@@ -53,7 +70,7 @@ public class DeviceClientConfigTest
     // Tests_SRS_DEVICECLIENTCONFIG_11_007: [The function shall return the IoT Hub name given in the constructor,
     // where the IoT Hub name is embedded in the IoT Hub hostname as follows: [IoT Hub name].[valid HTML chars]+.]
     @Test
-    public void getIotHubNameReturnsIotHubName() throws URISyntaxException
+    public void getIotHubNameReturnsIotHubName() throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -66,17 +83,27 @@ public class DeviceClientConfigTest
                         deviceId,
                         deviceKey,
                         sharedAccessToken);
+        final String expectedIotHubName = "test";
+
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getConnectionString().getHubName();
+                result = expectedIotHubName;
+            }
+        };
 
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-        String testIotHubName = config.getIotHubName();
+        final String testIotHubName = config.getIotHubName();
 
-        final String expectedIotHubName = "test";
         assertThat(testIotHubName, is(expectedIotHubName));
     }
 
     // Tests_SRS_DEVICECLIENTCONFIG_11_003: [The function shall return the device ID given in the constructor.]
     @Test
-    public void getDeviceIdReturnsDeviceId() throws URISyntaxException
+    public void getDeviceIdReturnsDeviceId() throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -89,6 +116,16 @@ public class DeviceClientConfigTest
                         deviceId,
                         deviceKey,
                         sharedAccessToken);
+
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getConnectionString().getDeviceId();
+                result = deviceId;
+            }
+        };
 
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
         String testDeviceId = config.getDeviceId();
@@ -97,9 +134,9 @@ public class DeviceClientConfigTest
         assertThat(testDeviceId, is(expectedDeviceId));
     }
 
-    // Tests_SRS_DEVICECLIENTCONFIG_11_004: [The function shall return the device key given in the constructor.]
+    // Tests_SRS_DEVICECLIENTCONFIG_11_004: [If this is using Sas token authentication, the function shall return the device key given in the constructor.]
     @Test
-    public void getDeviceKeyReturnsDeviceKey() throws URISyntaxException
+    public void getDeviceKeyReturnsDeviceKey() throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -113,6 +150,16 @@ public class DeviceClientConfigTest
                         deviceKey,
                         sharedAccessToken);
 
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getConnectionString().getSharedAccessKey();
+                result = deviceKey;
+            }
+        };
+
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
         String testDeviceKey = config.getDeviceKey();
 
@@ -120,9 +167,33 @@ public class DeviceClientConfigTest
         assertThat(testDeviceKey, is(expectedDeviceKey));
     }
 
-    // Tests_SRS_DEVICECLIENTCONFIG_25_018: [**The function shall return the SharedAccessToken given in the constructor.**] **
+    //Tests_SRS_DEVICECLIENTCONFIG_34_054: [If this is using x509 authentication, the function shall return null.]
     @Test
-    public void getSasTokenReturnsSasToken() throws URISyntaxException
+    public void getDeviceKeyReturnsNullIfNotUsingSasTokenAuth(@Mocked final IotHubConnectionString mockConnectionString) throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnrecoverableKeyException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockConnectionString.isUsingX509();
+                result = true;
+                new IotHubX509Authentication(mockConnectionString, "", false, "", false);
+                result = mockX509Authentication;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockConnectionString,  "", false, "", false);
+
+        //act
+        String testDeviceKey = config.getDeviceKey();
+
+        //assert
+        assertNull(testDeviceKey);
+    }
+
+    // Tests_SRS_DEVICECLIENTCONFIG_25_018: [If this is using sas token authentication, the function shall return the SharedAccessToken saved in the sas token authentication object.]
+    @Test
+    public void getSasTokenReturnsSasToken(@Mocked final IotHubSasToken mockSasToken, @Mocked final IotHubConnectionString mockIotHubConnectionString) throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -136,6 +207,16 @@ public class DeviceClientConfigTest
                         deviceKey,
                         sharedAccessToken);
 
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getSasToken();
+                result = sharedAccessToken;
+            }
+        };
+
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
         String testSasToken = config.getSharedAccessToken();
 
@@ -143,9 +224,34 @@ public class DeviceClientConfigTest
         assertThat(testSasToken, is(expectedSasToken));
     }
 
-    // Tests_SRS_DEVICECLIENTCONFIG_11_005: [The function shall return the value of tokenValidSecs.]
+    //Tests_SRS_DEVICECLIENTCONFIG_34_053: [If this is using x509 authentication, the function shall return null.]
     @Test
-    public void getMessageValidSecsReturnsConstant() throws URISyntaxException
+    public void getSasTokenReturnsNullIfNotUsingSasTokenAuth(@Mocked final IotHubSasToken mockSasToken, @Mocked final IotHubConnectionString mockIotHubConnectionString) throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnrecoverableKeyException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                new IotHubX509Authentication(mockIotHubConnectionString, "", false, "", false);
+                result = mockX509Authentication;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString,  "", false, "", false);
+
+        //act
+        String testSasToken = config.getSharedAccessToken();
+
+        //assert
+        assertNull(testSasToken);
+    }
+
+
+    // Tests_SRS_DEVICECLIENTCONFIG_11_005: [If this is using Sas token authentication, then this function shall return the value of tokenValidSecs saved in it and 0 otherwise.]
+    @Test
+    public void getMessageValidSecsReturnsConstant() throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -158,17 +264,45 @@ public class DeviceClientConfigTest
                         deviceId,
                         deviceKey,
                         sharedAccessToken);
+
+        final long expectedMessageValidSecs = 3600;
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getTokenValidSecs();
+                result = expectedMessageValidSecs;
+            }
+        };
 
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
         long testMessageValidSecs = config.getTokenValidSecs();
 
-        final long expectedMessageValidSecs = 3600;
         assertThat(testMessageValidSecs, is(expectedMessageValidSecs));
+    }
+
+    // Tests_SRS_DEVICECLIENTCONFIG_11_005: [If this is using Sas token authentication, then this function shall return the value of tokenValidSecs saved in it and 0 otherwise.]
+    @Test
+    public void getMessageValidSecsReturnsZeroIfNotUsingSasAuth(@Mocked final IotHubConnectionString mockConnectionString) throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        new NonStrictExpectations()
+        {
+            {
+                mockConnectionString.isUsingX509();
+                result = true;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockConnectionString, "", false, "", false);
+        long testMessageValidSecs = config.getTokenValidSecs();
+
+        assertEquals(0L, testMessageValidSecs);
     }
 
     // Tests_SRS_DEVICECLIENTCONFIG_25_008: [The function shall set the value of tokenValidSecs.]
     @Test
-    public void getandsetMessageValidSecsReturnsConstant() throws URISyntaxException
+    public void getandsetMessageValidSecsReturnsConstant() throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -181,10 +315,20 @@ public class DeviceClientConfigTest
                         deviceId,
                         deviceKey,
                         sharedAccessToken);
+        final long testsetMessageValidSecs = 60;
+
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubSasTokenAuthentication(iotHubConnectionString);
+                result = mockSasTokenAuthentication;
+                mockSasTokenAuthentication.getTokenValidSecs();
+                result = testsetMessageValidSecs;
+            }
+        };
 
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
 
-        long testsetMessageValidSecs = 60;
         config.setTokenValidSecs(testsetMessageValidSecs);
         long testgetMessageValidSecs= config.getTokenValidSecs();
 
@@ -197,7 +341,7 @@ public class DeviceClientConfigTest
     @Test
     public void getAndSetMessageCallbackMatch(
             @Mocked final MessageCallback mockCallback)
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -225,7 +369,7 @@ public class DeviceClientConfigTest
     @Test
     public void getAndSetMessageCallbackContextsMatch(
             @Mocked final MessageCallback mockCallback)
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -257,7 +401,7 @@ public class DeviceClientConfigTest
     @Test
     public void getAndSetDeviceTwinMessageCallbackAndContextsMatch(
             @Mocked final MessageCallback mockCallback)
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -290,7 +434,7 @@ public class DeviceClientConfigTest
     @Test
     public void getAndSetDeviceMethodMessageCallbackAndContextsMatch(
             @Mocked final MessageCallback mockCallback)
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -318,7 +462,7 @@ public class DeviceClientConfigTest
     @Test
     public void getAndSetDeviceMethodAndTwinMessageCallbackAndContextsMatch(
             @Mocked final MessageCallback mockCallback)
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -352,7 +496,7 @@ public class DeviceClientConfigTest
     }
     // Tests_SRS_DEVICECLIENTCONFIG_11_012: [The function shall return 240000ms.]
     @Test
-    public void getReadTimeoutMillisReturnsConstant() throws URISyntaxException
+    public void getReadTimeoutMillisReturnsConstant() throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -375,7 +519,7 @@ public class DeviceClientConfigTest
 
     //Tests_SRS_DEVICECLIENTCONFIG_25_038: [The function shall save useWebsocket.]
     @Test
-    public void setWebsocketEnabledSets() throws URISyntaxException
+    public void setWebsocketEnabledSets() throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -396,7 +540,7 @@ public class DeviceClientConfigTest
 
     //Tests_SRS_DEVICECLIENTCONFIG_25_037: [The function shall return the true if websocket is enabled, false otherwise.]
     @Test
-    public void getWebsocketEnabledGets() throws URISyntaxException
+    public void getWebsocketEnabledGets() throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -418,7 +562,7 @@ public class DeviceClientConfigTest
     // Tests_SRS_DEVICECLIENTCONFIG_11_013: [The function shall return 180s.]
     @Test
     public void getMessageLockTimeoutSecsReturnsConstant()
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
@@ -440,236 +584,86 @@ public class DeviceClientConfigTest
                 is(expectedMessageLockTimeoutSecs));
     }
 
-    //Tests_SRS_DEVICECLIENTCONFIG_25_027: [**The function shall return the value of the path to the certificate.**] **
+    //Tests_SRS_DEVICECLIENTCONFIG_34_051: [If this is using Sas token Authentication, then this function shall return the IotHubSSLContext saved in its Sas token authentication object.]
     @Test
-    public void getPathToCertificateGets() throws URISyntaxException
+    public void getIotHubSSLContextGetsFromSASTokenAuthWhenUsingSASTokenAuth(@Mocked final IotHubSSLContext mockedContext, @Mocked final IotHubConnectionString iotHubConnectionString) throws URISyntaxException, IOException
     {
-        final String iotHubHostname = "test.iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final String sharedAccessToken = null;
-        final String certPath = "/test/path/to/certificate";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class, String.class, String.class, String.class},
-                        iotHubHostname,
-                        deviceId,
-                        deviceKey,
-                        sharedAccessToken);
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                iotHubConnectionString.isUsingX509();
+                result = false;
+                mockSasTokenAuthentication.getIotHubSSLContext();
+                result = mockedContext;
+            }
+        };
 
         DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
 
-        config.setPathToCert(certPath);
-
-        String testCertPath = config.getPathToCertificate();
-
-        assertNotNull(certPath);
-        assertEquals(testCertPath, certPath);
-    }
-
-    //Tests_SRS_DEVICECLIENTCONFIG_25_028: [**The function shall set the path to the certificate**] **
-    @Test
-    public void setPathToCertificateSets() throws URISyntaxException
-    {
-        final String iotHubHostname = "test.iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final String sharedAccessToken = null;
-        final String certPath = "/test/path/to/certificate";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class, String.class, String.class, String.class},
-                        iotHubHostname,
-                        deviceId,
-                        deviceKey,
-                        sharedAccessToken);
-
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-
-        config.setPathToCert(certPath);
-
-        String testCertPath = config.getPathToCertificate();
-
-        assertNotNull(certPath);
-        assertEquals(testCertPath, certPath);
-    }
-
-    //Tests_SRS_DEVICECLIENTCONFIG_25_030: [**The function shall return the value of the user certificate string.**] **
-    @Test
-    public void getUserCertificateGets() throws URISyntaxException
-    {
-        final String iotHubHostname = "test.iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final String sharedAccessToken = null;
-        final String cert = "ValidCertString";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class, String.class, String.class, String.class},
-                        iotHubHostname,
-                        deviceId,
-                        deviceKey,
-                        sharedAccessToken);
-
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-
-        config.setUserCertificateString(cert);
-
-        String testCert = config.getUserCertificateString();
-
-        assertNotNull(cert);
-        assertEquals(testCert, cert);
-    }
-
-    //Tests_SRS_DEVICECLIENTCONFIG_25_029: [**The function shall set user certificate String**] **
-    @Test
-    public void setUserCertificateSets() throws URISyntaxException
-    {
-        final String iotHubHostname = "test.iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final String sharedAccessToken = null;
-        final String cert = "ValidCertString";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class, String.class, String.class, String.class},
-                        iotHubHostname,
-                        deviceId,
-                        deviceKey,
-                        sharedAccessToken);
-
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-
-        config.setUserCertificateString(cert);
-
-        String testCert = config.getUserCertificateString();
-
-        assertNotNull(cert);
-        assertEquals(testCert, cert);
-    }
-
-    //Tests_SRS_DEVICECLIENTCONFIG_25_032: [**The function shall return the IotHubSSLContext.**] **
-    @Test
-    public void getIotHubSSLContextGets(@Mocked final IotHubSSLContext mockedContext) throws URISyntaxException
-    {
-        final String iotHubHostname = "test.iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final String sharedAccessToken = null;
-        final String cert = "ValidCertString";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class, String.class, String.class, String.class},
-                        iotHubHostname,
-                        deviceId,
-                        deviceKey,
-                        sharedAccessToken);
-
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-
-        config.setIotHubSSLContext(mockedContext);
-
+        //act
         IotHubSSLContext testContext = config.getIotHubSSLContext();
 
+        //assert
         assertNotNull(testContext);
         assertEquals(testContext, mockedContext);
+        new Verifications()
+        {
+            {
+                mockSasTokenAuthentication.getIotHubSSLContext();
+                times = 1;
+                mockX509Authentication.getIotHubSSLContext();
+                times = 0;
+            }
+        };
     }
 
-    //Tests_SRS_DEVICECLIENTCONFIG_25_031: [**The function shall set IotHub SSL Context**] **
+    //Tests_SRS_DEVICECLIENTCONFIG_34_052: [If this is using X509 Authentication, then this function shall return the IotHubSSLContext saved in its X509 authentication object.]
     @Test
-    public void setIotHubSSLContextSets(@Mocked final IotHubSSLContext mockedContext) throws URISyntaxException
+    public void getIotHubSSLContextGetsFromX509AuthWhenUsingX509Auth(@Mocked final IotHubSSLContext mockedContext, @Mocked final IotHubConnectionString iotHubConnectionString) throws URISyntaxException, IOException
     {
-        final String iotHubHostname = "test.iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final String sharedAccessToken = null;
-        final String cert = "ValidCertString";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class, String.class, String.class, String.class},
-                        iotHubHostname,
-                        deviceId,
-                        deviceKey,
-                        sharedAccessToken);
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                iotHubConnectionString.isUsingX509();
+                result = true;
+                mockX509Authentication.getIotHubSSLContext();
+                result = mockedContext;
+            }
+        };
 
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
+        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString, publicKeyCert, false, privateKey, false);
 
-        config.setIotHubSSLContext(mockedContext);
-
+        //act
         IotHubSSLContext testContext = config.getIotHubSSLContext();
 
+        //assert
         assertNotNull(testContext);
         assertEquals(testContext, mockedContext);
-    }
-
-    // Tests_SRS_DEVICECLIENTCONFIG_21_033: [The constructor shall save the IoT Hub hostname, hubname,
-    // device ID, device key, and device token, provided in the `iotHubConnectionString`.]
-    @Test
-    public void constructorWithConnectionStringKeySucceed() throws URISyntaxException
-    {
-        // arrange
-        final String iotHubname = "iotHubName";
-        final String iotHubHostname = iotHubname + ".iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String deviceKey = "test-devicekey";
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class},
-                        "HostName=" + iotHubHostname + ";CredentialType=SharedAccessKey;CredentialScope=Device;" +
-                        "DeviceId=" + deviceId + ";SharedAccessKey=" + deviceKey + ";");
-
-        // act
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-
-        // assert
-        assertNotNull(config);
-        IotHubConnectionString actualConnectionString = Deencapsulation.getField(config, "iotHubConnectionString");
-        assertEquals(iotHubHostname, actualConnectionString.getHostName());
-        assertEquals(iotHubname, actualConnectionString.getHubName());
-        assertEquals(deviceId, actualConnectionString.getDeviceId());
-        assertEquals(deviceKey, actualConnectionString.getSharedAccessKey());
-    }
-
-    // Tests_SRS_DEVICECLIENTCONFIG_21_033: [The constructor shall save the IoT Hub hostname, hubname,
-    // device ID, device key, and device token, provided in the `iotHubConnectionString`.]
-    @Test
-    public void constructorWithConnectionStringTokenSucceed() throws URISyntaxException
-    {
-        // arrange
-        final String iotHubname = "iotHubName";
-        final String iotHubHostname = iotHubname + ".iothubhostname";
-        final String deviceId = "test-deviceid";
-        final String sharedAccessToken = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=" + Long.MAX_VALUE;;
-        final IotHubConnectionString iotHubConnectionString =
-                Deencapsulation.newInstance(IotHubConnectionString.class,
-                        new Class[] {String.class},
-                        "HostName=" + iotHubHostname + ";CredentialType=SharedAccessKey;CredentialScope=Device;" +
-                        "DeviceId=" + deviceId + ";SharedAccessSignature=" + sharedAccessToken + ";");
-
-        // act
-        DeviceClientConfig config = new DeviceClientConfig(iotHubConnectionString);
-
-        // assert
-        assertNotNull(config);
-        IotHubConnectionString actualConnectionString = Deencapsulation.getField(config, "iotHubConnectionString");
-        assertEquals(iotHubHostname, actualConnectionString.getHostName());
-        assertEquals(iotHubname, actualConnectionString.getHubName());
-        assertEquals(deviceId, actualConnectionString.getDeviceId());
-        assertEquals(sharedAccessToken, actualConnectionString.getSharedAccessToken());
+        new Verifications()
+        {
+            {
+                mockSasTokenAuthentication.getIotHubSSLContext();
+                times = 0;
+                mockX509Authentication.getIotHubSSLContext();
+                times = 1;
+            }
+        };
     }
 
     // Tests_SRS_DEVICECLIENTCONFIG_21_034: [If the provided `iotHubConnectionString` is null,
     // the constructor shall throw IllegalArgumentException.]
     @Test(expected = IllegalArgumentException.class)
     public void constructorFailsNullConnectionString()
-            throws URISyntaxException
+            throws URISyntaxException, IOException
     {
         new DeviceClientConfig(null);
     }
 
-    //Tests_SRS_DEVICECLIENTCONFIG_34_035: [If the saved sas token has expired and there is no device key present, this function shall return true.]
+    //Tests_SRS_DEVICECLIENTCONFIG_34_049: [If this is using SAS token authentication, this function shall return if that SAS Token authentication needs renewal.]
     @Test
-    public void needsToRenewSasTokenReturnsTrueWhenSASTokenExpired(@Mocked final IotHubConnectionString mockIotHubConnectionString)
+    public void needsToRenewSasTokenReturnsTrueWhenSASTokenExpired(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
     {
         //arrange
         final String expiredSasToken = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=" + 0L;;
@@ -679,6 +673,8 @@ public class DeviceClientConfigTest
             {
                 mockIotHubConnectionString.getSharedAccessToken();
                 result = expiredSasToken;
+                mockSasTokenAuthentication.needsToRenewSasToken();
+                result = true;
             }
         };
 
@@ -691,102 +687,417 @@ public class DeviceClientConfigTest
         assertTrue(needsToRenewToken);
     }
 
-    //Tests_SRS_DEVICECLIENTCONFIG_34_035: [If the saved sas token has expired and there is no device key present, this function shall return true.]
+    //Tests_SRS_DEVICECLIENTCONFIG_34_050: [If this isn't using SAS token authentication, this function shall return false.]
     @Test
-    public void needsToRenewSasTokenReturnsFalseWhenSASTokenNotExpired(@Mocked final IotHubConnectionString mockIotHubConnectionString)
+    public void needsToRenewSasTokenReturnsFalseWhenNotUsingSasToken(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
     {
         //arrange
-        final String nonExpiredSasToken = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=" + Long.MAX_VALUE;
-
         new NonStrictExpectations()
         {
             {
-                mockIotHubConnectionString.getSharedAccessToken();
-                result = nonExpiredSasToken;
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString,  "", false, "", false);
+
+        //act
+        boolean needsToRenewToken = config.needsToRenewSasToken();
+
+        //assert
+        assertFalse(needsToRenewToken);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_039: [This function shall return the type of authentication that the config is set up to use.]
+    @Test
+    public void getAuthenticationTypeWorks(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //arrange
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
+
+        DeviceClientConfig.AuthType expectedAuthType = DeviceClientConfig.AuthType.X509_CERTIFICATE;
+        Deencapsulation.setField(config, "authenticationType", expectedAuthType);
+
+        //act
+        DeviceClientConfig.AuthType actualAuthType = config.getAuthenticationType();
+
+        //assert
+        assertEquals(expectedAuthType, actualAuthType);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_045: [If this is using x509 authentication, this function shall return this object's x509 certificate pair.]
+    @Test
+    public void getPublicKeyCertWorks(@Mocked final X509CertificatePair mockCertPair, @Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //arrange
+        new Expectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                mockX509Authentication.getX509CertificatePair();
+                result = mockCertPair;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, publicKeyCert, false, privateKey, false);
+
+        //act
+        X509CertificatePair actualCertPair = Deencapsulation.invoke(config, "getX509CertificatePair");
+
+        //assert
+        assertEquals(mockCertPair, actualCertPair);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_056: [If this is using sas token authentication, this function shall return null.]
+    @Test
+    public void getPublicKeyCertReturnsNullIfNotUsingX509Auth(@Mocked final X509CertificatePair mockCertPair, @Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //arrange
+        new Expectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = false;
             }
         };
 
         DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
 
         //act
-        boolean needsToRenewToken = config.needsToRenewSasToken();
+        X509CertificatePair actualCertPair = Deencapsulation.invoke(config, "getX509CertificatePair");
 
         //assert
-        assertFalse(needsToRenewToken);
+        assertNull(actualCertPair);
     }
 
-    //Tests_SRS_DEVICECLIENTCONFIG_34_035: [If the saved sas token has expired and there is no device key present, this function shall return true.]
+    //Tests_SRS_DEVICECLIENTCONFIG_34_046: [If the provided `iotHubConnectionString` does not use x509 authentication, it shall be saved to a new IotHubSasTokenAuthentication object and the authentication type of this shall be set to SASToken.]
     @Test
-    public void needsToRenewSasTokenReturnsFalseWhenSASTokenExpiredButDeviceKeyPresent(
-            @Mocked final IotHubConnectionString mockIotHubConnectionString,
-            @Mocked final IotHubSasToken mockSasToken)
+    public void constructorUsingSASTokenSetsTypeCorrectly(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws URISyntaxException, IOException
     {
         //arrange
-        final String expiredSasToken = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=" + 0L;
-        final DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = false;
+            }
+        };
 
-        Deencapsulation.setField(mockSasToken, "sasToken", expiredSasToken);
+        //act
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
+
+        //assert
+        DeviceClientConfig.AuthType actualAuthType = Deencapsulation.getField(config, "authenticationType");
+        assertEquals(DeviceClientConfig.AuthType.SAS_TOKEN, actualAuthType);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_048: [If an exception is thrown when creating the appropriate Authentication object, an IOException shall be thrown containing the details of that exception.]
+    @Test (expected = IOException.class)
+    public void constructorThrowsIOExceptionIfAnyExceptionCaughtCreatingAuthentication(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws URISyntaxException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = false;
+                new IotHubSasTokenAuthentication(mockIotHubConnectionString);
+                result = new CertificateException();
+            }
+        };
+
+        //act
+        new DeviceClientConfig(mockIotHubConnectionString);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_059: [If this function is called while this is using Sas token authentication, an IllegalStateException shall be thrown.]
+    @Test (expected = IllegalStateException.class)
+    public void setCertPathWhileUsingSasAuthThrows(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
+
+        //act
+        config.setPathToCert("any string");
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_061: [If any exceptions are thrown while creating a new SSL context with the new public key certificate, this function shall throw an IOException.]
+    @Test (expected = IOException.class)
+    public void getCertPathHandlesExceptions(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        final String expectedCertPath = "someCert";
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                mockX509Authentication.getX509CertificatePair().getPublicKeyCertificate();
+                result = expectedCertPath;
+                mockX509Authentication.getX509CertificatePair().getPrivateKey();
+                result = privateKey;
+                mockX509Authentication.getIotHubConnectionString();
+                result = mockIotHubConnectionString;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, expectedCertPath, true, privateKey, true);
 
         new NonStrictExpectations()
         {
             {
-                mockIotHubConnectionString.getSharedAccessKey();
-                result = "some key";
-                mockIotHubConnectionString.getSharedAccessToken();
-                result = expiredSasToken;
-                mockIotHubConnectionString.getHostName();
-                result = "someHost";
-                new IotHubSasToken(config, anyLong);
-                result = mockSasToken;
-                IotHubSasToken.isSasTokenExpired(expiredSasToken);
+                new IotHubX509Authentication(mockIotHubConnectionString, expectedCertPath, true, privateKey, false);
+                result = new CertificateException();
+            }
+        };
+
+        //act
+        config.setPathToCert(expectedCertPath);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_060: [This function shall regenerate it's SSL context using the new public key certificate.]
+    @Test
+    public void setCertPathCreatesNewSSLContext(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockX509Authentication.getX509CertificatePair().getPrivateKey();
+                result = privateKey;
+                mockX509Authentication.getIotHubConnectionString();
+                result = mockIotHubConnectionString;
+                mockIotHubConnectionString.isUsingX509();
                 result = true;
             }
         };
 
-        //act
-        boolean needsToRenewToken = config.needsToRenewSasToken();
-
-        //assert
-        assertFalse(needsToRenewToken);
-    }
-
-    //Tests_SRS_DEVICECLIENTCONFIG_34_036: [If this function generates the returned SharedAccessToken from a device key, the previous SharedAccessToken shall be overwritten with the generated value.]
-    @Test
-    public void getSharedAccessTokenOverwritesOldTokenIfGeneratedByDeviceKey(
-            @Mocked final IotHubConnectionString mockIotHubConnectionString,
-            @Mocked final IotHubSasToken mockSasToken)
-    {
-        //arrange
-        final String expiredSasToken = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=" + 0L;
-        final DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
-        final String expectedSasTokenString = "some new sas token";
-        final String deviceKey = "some device key";
-
-        new NonStrictExpectations()
-        {
-            {
-                mockIotHubConnectionString.getSharedAccessKey();
-                result = deviceKey;
-                mockSasToken.toString();
-                result = expectedSasTokenString;
-                new IotHubSasToken(config, anyLong);
-                result = mockSasToken;
-            }
-        };
+        final String expectedPath = "some/path";
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, "some cert", false, privateKey, false);
 
         //act
-        String actualSharedAccessToken = config.getSharedAccessToken();
+        config.setPathToCert(expectedPath);
 
         //assert
         new Verifications()
         {
             {
-                Deencapsulation.invoke(mockIotHubConnectionString, "setSharedAccessToken", new Class[] {String.class}, expectedSasTokenString);
-                times = 1;
+                new IotHubX509Authentication(mockIotHubConnectionString, expectedPath, true, privateKey, false);
+            }
+        };
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_063: [If this function is called while this is using Sas token authentication, null shall be returned.]
+    @Test
+    public void getCertPathWhileSasAuthReturnsNull(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //act
+        assertNull(new DeviceClientConfig(mockIotHubConnectionString).getPathToCertificate());
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_064: [If this function is called while this is using Sas token authentication, an IllegalStateException shall be thrown.]
+    @Test (expected = IllegalStateException.class)
+    public void setCertWhileUsingSasAuthThrows(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString);
+
+        //act
+        config.setUserCertificateString("any string");
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_062: [This function shall return the saved path to the public key certificate or null if it is not saved.]
+    @Test
+    public void getCertPathSuccess(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //arrange
+        final String expectedCertPath = "someCertPath";
+        final String expectedKeyPath = "someKeyPath";
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                mockX509Authentication.getX509CertificatePair().getPathToPublicKeyCertificate();
+                result = expectedCertPath;
             }
         };
 
-        assertNotEquals(expiredSasToken, actualSharedAccessToken);
-        assertEquals(expectedSasTokenString, actualSharedAccessToken);
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, expectedCertPath, true, expectedKeyPath, true);
+
+        //act
+        String actualCertPath = config.getPathToCertificate();
+
+        //assert
+        assertEquals(expectedCertPath, actualCertPath);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_067: [If this function is called while this is using Sas token authentication, null shall be returned.]
+    @Test
+    public void getCertWhileSasAuthReturnsNull(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //act
+        assertNull(new DeviceClientConfig(mockIotHubConnectionString).getUserCertificateString());
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_065: [This function shall create a new SSL context using the new public key certificate.]
+    @Test
+    public void setCertCreatesNewSSLContext(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockX509Authentication.getX509CertificatePair().getPrivateKey();
+                result = privateKey;
+                mockX509Authentication.getIotHubConnectionString();
+                result = mockIotHubConnectionString;
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+            }
+        };
+
+        final String expectedCert = "someCert";
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, "some cert", false, privateKey, false);
+
+        //act
+        config.setUserCertificateString(expectedCert);
+
+        //assert
+        new Verifications()
+        {
+            {
+                new IotHubX509Authentication(mockIotHubConnectionString, expectedCert, false, privateKey, false);
+            }
+        };
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_066: [If any exceptions are thrown while creating a new SSL context with the new public key certificate, this function shall throw an IOException.]
+    @Test (expected = IOException.class)
+    public void getCertHandlesExceptions(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                mockX509Authentication.getX509CertificatePair().getPublicKeyCertificate();
+                result = publicKeyCert;
+                mockX509Authentication.getX509CertificatePair().getPrivateKey();
+                result = privateKey;
+                mockX509Authentication.getIotHubConnectionString();
+                result = mockIotHubConnectionString;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, publicKeyCert, true, privateKey, true);
+
+        new NonStrictExpectations()
+        {
+            {
+                new IotHubX509Authentication(mockIotHubConnectionString, publicKeyCert, false, privateKey, false);
+                result = new CertificateException();
+            }
+        };
+
+        //act
+        config.setUserCertificateString(publicKeyCert);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_068: [This function shall return the saved user certificate string.]
+    @Test
+    public void getCertSuccess(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                mockX509Authentication.getX509CertificatePair().getPublicKeyCertificate();
+                result = publicKeyCert;
+            }
+        };
+
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, publicKeyCert, true, privateKey, true);
+
+        //act
+        String actualCert = config.getUserCertificateString();
+
+        //assert
+        assertEquals(publicKeyCert, actualCert);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_069: [This function shall generate a new SSLContext and set this to using X509 authentication.]
+    @Test
+    public void x509ConstructorGeneratesNewSSLContext(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+            }
+        };
+
+        //act
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, publicKeyCert, false, privateKey, false);
+
+        //assert
+        new Verifications()
+        {
+            {
+                new IotHubX509Authentication(mockIotHubConnectionString, publicKeyCert, false, privateKey, false);
+            }
+        };
+    }
+
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_070: [If any exceptions are encountered while generating the new SSLContext, an IOException shall be thrown.]
+    @Test (expected = IOException.class)
+    public void x509ConstructorExceptions(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+                new IotHubX509Authentication(mockIotHubConnectionString, publicKeyCert, false, privateKey, false);
+                result = new CertificateException();
+            }
+        };
+
+        //act
+        DeviceClientConfig config = new DeviceClientConfig(mockIotHubConnectionString, publicKeyCert, false, privateKey, false);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_069: [If the provided connection string is null or does not use x509 auth, and IllegalArgumentException shall be thrown.]
+    @Test (expected = IllegalArgumentException.class)
+    public void constructorWithNullConnStringThrows(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //act
+        new DeviceClientConfig(mockIotHubConnectionString, "", false, "", false);
+    }
+
+    //Tests_SRS_DEVICECLIENTCONFIG_34_069: [If the provided connection string is null or does not use x509 auth, and IllegalArgumentException shall be thrown.]
+    @Test (expected = IllegalArgumentException.class)
+    public void constructorWithWrongAuthTypeConnStringThrows(@Mocked final IotHubConnectionString mockIotHubConnectionString) throws IOException
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = false;
+            }
+        };
+
+        //act
+        new DeviceClientConfig(mockIotHubConnectionString, "", false, "", false);
     }
 }

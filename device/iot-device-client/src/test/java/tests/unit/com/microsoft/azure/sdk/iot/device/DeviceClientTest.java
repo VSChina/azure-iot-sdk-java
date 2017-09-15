@@ -5,6 +5,8 @@ package tests.unit.com.microsoft.azure.sdk.iot.device;
 
 import com.microsoft.azure.sdk.iot.device.*;
 import com.microsoft.azure.sdk.iot.device.DeviceTwin.*;
+import com.microsoft.azure.sdk.iot.device.auth.IotHubConnectionString;
+import com.microsoft.azure.sdk.iot.device.auth.IotHubSSLContext;
 import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
 import com.microsoft.azure.sdk.iot.device.fileupload.FileUpload;
 import mockit.Deencapsulation;
@@ -22,6 +24,8 @@ import java.util.Set;
 
 /**
  * Unit tests for DeviceClient.
+ * Methods: 90%
+ * Lines: 81%
  */
 public class DeviceClientTest
 {
@@ -36,7 +40,6 @@ public class DeviceClientTest
 
     @Mocked
     IotHubSasToken mockIoTHubSasToken;
-
 
     private static long SEND_PERIOD_MILLIS = 10L;
     private static long RECEIVE_PERIOD_MILLIS_AMQPS = 10L;
@@ -73,7 +76,7 @@ public class DeviceClientTest
     /* Tests_SRS_DEVICECLIENT_21_002: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.] */
     /* Tests_SRS_DEVICECLIENT_21_003: [The constructor shall save the connection configuration using the object DeviceClientConfig.] */
     @Test
-    public void constructorSuccess() throws URISyntaxException
+    public void constructorSuccess() throws URISyntaxException, IOException
     {
         // arrange
         final String connString =
@@ -99,9 +102,51 @@ public class DeviceClientTest
         };
     }
 
+    //Tests_SRS_DEVICECLIENT_21_058: [The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.]
+    //Tests_SRS_DEVICECLIENT_21_059: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.]
+    //Tests_SRS_DEVICECLIENT_21_060: [The constructor shall save the connection configuration using the object DeviceClientConfig.]
+    //Tests_SRS_DEVICECLIENT_34_063: [This function shall save the provided certificate and key within its config.]
+    @Test
+    public void constructorSuccessX509() throws URISyntaxException, IOException
+    {
+        // arrange
+        final String publicKeyCert = "someCert";
+        final String privateKey = "someKey";
+
+        final String connString =
+                "HostName=iothub.device.com;DeviceId=testdevice;x509=true";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.AMQPS_WS;
+
+        new NonStrictExpectations()
+        {
+            {
+                mockIotHubConnectionString.isUsingX509();
+                result = true;
+            }
+        };
+
+        // act
+        new DeviceClient(connString, protocol, publicKeyCert, false, privateKey, false);
+
+        // assert
+        new Verifications()
+        {
+            {
+                Deencapsulation.newInstance(IotHubConnectionString.class, connString);
+                times = 1;
+                new DeviceClientConfig((IotHubConnectionString) any, publicKeyCert, false, privateKey, false);
+                times = 1;
+                Deencapsulation.newInstance("com.microsoft.azure.sdk.iot.device.DeviceIO",
+                        new Class[] {DeviceClientConfig.class, IotHubClientProtocol.class, long.class, long.class},
+                        (DeviceClientConfig)any, protocol, SEND_PERIOD_MILLIS, RECEIVE_PERIOD_MILLIS_AMQPS);
+                times = 1;
+            }
+        };
+    }
+
     /* Tests_SRS_DEVICECLIENT_21_004: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.] */
     @Test (expected = IllegalArgumentException.class)
-    public void constructorNullConnectionStringThrows() throws URISyntaxException
+    public void constructorNullConnectionStringThrows() throws URISyntaxException, IOException
     {
         // arrange
         final String connString = null;
@@ -111,9 +156,22 @@ public class DeviceClientTest
         new DeviceClient(connString, protocol);
     }
 
+    //Tests_SRS_DEVICECLIENT_21_061: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.]
+    @Test (expected = IllegalArgumentException.class)
+    public void x509ConstructorNullConnectionStringThrows() throws URISyntaxException, IOException
+    {
+        // arrange
+        final String connString = null;
+        final IotHubClientProtocol protocol = IotHubClientProtocol.AMQPS;
+
+        // act
+        new DeviceClient(connString, protocol, "any cert", false, "any key", false);
+    }
+
+
     /* Tests_SRS_DEVICECLIENT_21_004: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.] */
     @Test (expected = IllegalArgumentException.class)
-    public void constructorEmptyConnectionStringThrows() throws URISyntaxException
+    public void constructorEmptyConnectionStringThrows() throws URISyntaxException, IOException
     {
         // arrange
         final String connString = "";
@@ -123,9 +181,21 @@ public class DeviceClientTest
         new DeviceClient(connString, protocol);
     }
 
+    //Tests_SRS_DEVICECLIENT_21_062: [If protocol is null, the function shall throw an IllegalArgumentException.]
+    @Test (expected = IllegalArgumentException.class)
+    public void x509ConstructorEmptyConnectionStringThrows() throws URISyntaxException, IOException
+    {
+        // arrange
+        final String connString = "";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.AMQPS;
+
+        // act
+        new DeviceClient(connString, protocol, "any cert", false, "any key", false);
+    }
+
     /* Tests_SRS_DEVICECLIENT_21_005: [If protocol is null, the function shall throw an IllegalArgumentException.] */
     @Test (expected = IllegalArgumentException.class)
-    public void constructorNullProtocolThrows() throws URISyntaxException
+    public void constructorNullProtocolThrows() throws URISyntaxException, IOException
     {
         // arrange
         final String connString =
@@ -138,7 +208,7 @@ public class DeviceClientTest
 
     /* Tests_SRS_DEVICECLIENT_21_001: [The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.] */
     @Test
-    public void constructorBadConnectionStringThrows() throws URISyntaxException
+    public void constructorBadConnectionStringThrows() throws URISyntaxException, IOException
     {
         // arrange
         final String connString =
@@ -160,6 +230,9 @@ public class DeviceClientTest
         catch (IllegalArgumentException expected)
         {
             // Don't do anything, throw expected.
+        } catch (IOException e)
+        {
+            e.printStackTrace();
         }
 
         // assert
@@ -180,7 +253,7 @@ public class DeviceClientTest
 
     /* Tests_SRS_DEVICECLIENT_21_002: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.] */
     @Test
-    public void constructorBadDeviceIOThrows() throws URISyntaxException
+    public void constructorBadDeviceIOThrows() throws URISyntaxException, IOException
     {
         // arrange
         final String connString =
@@ -224,7 +297,7 @@ public class DeviceClientTest
 
     /* Tests_SRS_DEVICECLIENT_21_003: [The constructor shall save the connection configuration using the object DeviceClientConfig.] */
     @Test
-    public void constructorBadDeviceClientConfigThrows() throws URISyntaxException
+    public void constructorBadDeviceClientConfigThrows() throws URISyntaxException, IOException
     {
         // arrange
         final String connString =
@@ -1771,7 +1844,7 @@ public class DeviceClientTest
         };
     }
 
-    //Tests_SRS_DEVICECLIENT_34_046: [If The provided connection string contains an expired SAS token, throw a SecurityException.]
+    //Tests_SRS_DEVICECLIENT_34_055: [If the provided connection string contains an expired SAS token, a SecurityException shall be thrown.]
     @Test (expected = SecurityException.class)
     public void deviceClientInitializedWithExpiredTokenThrowsSecurityException() throws SecurityException, URISyntaxException, IOException
     {
@@ -1783,8 +1856,8 @@ public class DeviceClientTest
         new NonStrictExpectations()
         {
             {
-                IotHubSasToken.isSasTokenExpired(anyString);
-                result = true;
+                new IotHubConnectionString(anyString);
+                result = new SecurityException();
 
                 mockConfig.getSharedAccessToken();
                 result = expiredConnString;
@@ -1808,7 +1881,10 @@ public class DeviceClientTest
         new NonStrictExpectations()
         {
             {
-                IotHubSasToken.isSasTokenExpired(anyString);
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
+
+                IotHubSasToken.isExpired(anyString);
                 result = true;
 
                 mockConfig.getSharedAccessToken();
@@ -1823,7 +1899,6 @@ public class DeviceClientTest
     /* Tests_SRS_DEVICECLIENT_21_044: [The uploadToBlobAsync shall asynchronously upload the stream in `inputStream` to the blob in `destinationBlobName`.] */
     /* Tests_SRS_DEVICECLIENT_21_048: [If there is no instance of the FileUpload, the uploadToBlobAsync shall create a new instance of the FileUpload.] */
     /* Tests_SRS_DEVICECLIENT_21_050: [The uploadToBlobAsync shall start the stream upload process, by calling uploadToBlobAsync on the FileUpload class.] */
-    /* Tests_SRS_DEVICECLIENT_21_053: [If the `config` do not have a valid IotHubSSLContext, the uploadToBlobAsync shall create and set one.] */
     @Test
     public void startFileUploadSucceeds(@Mocked final FileUpload mockedFileUpload,
                                         @Mocked final InputStream mockInputStream,
@@ -1859,8 +1934,6 @@ public class DeviceClientTest
         new Verifications()
         {
             {
-                Deencapsulation.invoke(mockConfig, "getIotHubSSLContext");
-                times = 1;
                 Deencapsulation.newInstance(FileUpload.class, mockConfig);
                 times = 1;
                 Deencapsulation.invoke(mockedFileUpload, "uploadToBlobAsync",
@@ -1898,6 +1971,7 @@ public class DeviceClientTest
             }
         };
         DeviceClient client = new DeviceClient(connString, protocol);
+
         client.uploadToBlobAsync(destinationBlobName, mockInputStream, streamLength, mockedStatusCB, mockedPropertyCB);
 
         // act
@@ -2193,7 +2267,7 @@ public class DeviceClientTest
     //Tests_SRS_DEVICECLIENT_99_001: [The registerConnectionStateCallback shall register the callback with the Device IO.]
     //Tests_SRS_DEVICECLIENT_99_002: [The registerConnectionStateCallback shall register the callback even if the client is not open.]
     @Test
-    public void registerConnectionStateCallback(@Mocked final IotHubConnectionStateCallback mockedStateCB) throws URISyntaxException
+    public void registerConnectionStateCallback(@Mocked final IotHubConnectionStateCallback mockedStateCB) throws URISyntaxException, IOException
     {
         //arrange
         final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
@@ -2218,7 +2292,7 @@ public class DeviceClientTest
     //Tests_SRS_DEVICECLIENT_99_003: [If the callback is null the method shall throw an IllegalArgument exception.]
     @Test (expected = IllegalArgumentException.class)
     public void registerConnectionStateCallbackNullCallback()
-            throws IllegalArgumentException, URISyntaxException
+            throws IllegalArgumentException, URISyntaxException, IOException
     {
         //arrange
         final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
@@ -2294,53 +2368,5 @@ public class DeviceClientTest
 
         // act
         client.uploadToBlobAsync(destinationBlobName, mockInputStream, streamLength, mockedStatusCB, mockedPropertyCB);
-    }
-
-    /* Tests_SRS_DEVICECLIENT_21_053: [If the `config` do not have a valid IotHubSSLContext, the uploadToBlobAsync shall create and set one.] */
-    @Test
-    public void createIotHubSSLContextIfNotExistsSucceeds(@Mocked final FileUpload mockedFileUpload,
-                                        @Mocked final InputStream mockInputStream,
-                                        @Mocked final IotHubSSLContext mockIotHubSSLContext,
-                                        @Mocked final IotHubEventCallback mockedStatusCB,
-                                        @Mocked final PropertyCallBack mockedPropertyCB) throws IOException, URISyntaxException
-    {
-        // arrange
-        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
-                + "SharedAccessKey=adjkl234j52=";
-        final IotHubClientProtocol protocol = IotHubClientProtocol.AMQPS;
-        final String destinationBlobName = "valid/blob/name.txt";
-        final long streamLength = 100;
-
-        deviceClientInstanceExpectation(connString, protocol);
-        new NonStrictExpectations()
-        {
-            {
-                Deencapsulation.invoke(mockConfig, "getIotHubSSLContext");
-                result = null;
-                Deencapsulation.newInstance(IotHubSSLContext.class, new Class[] {String.class, String.class}, (String) any, (String) any);
-                result = mockIotHubSSLContext;
-                Deencapsulation.newInstance(FileUpload.class, mockConfig);
-                result = mockedFileUpload;
-                Deencapsulation.invoke(mockedFileUpload, "uploadToBlobAsync",
-                                       destinationBlobName, mockInputStream, streamLength, mockedStatusCB, mockedPropertyCB);
-            }
-        };
-        DeviceClient client = new DeviceClient(connString, protocol);
-
-        // act
-        client.uploadToBlobAsync(destinationBlobName, mockInputStream, streamLength, mockedStatusCB, mockedPropertyCB);
-
-        // assert
-        new Verifications()
-        {
-            {
-                Deencapsulation.invoke(mockConfig, "getIotHubSSLContext");
-                times = 1;
-                Deencapsulation.newInstance(IotHubSSLContext.class, new Class[] {String.class, String.class}, (String) any, (String) any);
-                times = 1;
-                Deencapsulation.invoke(mockConfig, "setIotHubSSLContext", new Class[] {IotHubSSLContext.class}, (IotHubSSLContext) any);
-                times = 1;
-            }
-        };
     }
 }

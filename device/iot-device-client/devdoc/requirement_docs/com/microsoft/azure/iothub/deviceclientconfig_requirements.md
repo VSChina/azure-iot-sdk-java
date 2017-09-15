@@ -11,45 +11,43 @@ Configuration settings for an IoT Hub device client. Validates all user-defined 
 ```java
 public final class DeviceClientConfig
 {
-    private long tokenValidSecs = 3600;
-    public static final int DEFAULT_READ_TIMEOUT_MILLIS = 240000;
-    public static final int DEFAULT_MESSAGE_LOCK_TIMEOUT_SECS = 180;
-
-    public DeviceClientConfig(IotHubConnectionString iotHubConnectionString) throws URISyntaxException;
-    public DeviceClientConfig(String iotHubHostname, String deviceId, String deviceKey, String sharedAccessToken) throws URISyntaxException;
+    public DeviceClientConfig(IotHubConnectionString iotHubConnectionString) throws IOException, IllegalArgumentException;
+    
+    public DeviceClientConfig(IotHubConnectionString iotHubConnectionString, String publicKeyCertificate, boolean isPathForPublic, String privateKey, boolean isPathForPrivate) throws IOException
+    
+    public boolean isUseWebsocket();
+    public void setUseWebsocket(boolean useWebsocket);
+    
+    public IotHubSSLContext getIotHubSSLContext();
+    X509CertificatePair getX509CertificatePair();
+    
+    public String getIotHubHostname();
     public String getIotHubName();
     public String getDeviceId();
     public String getDeviceKey();
-    public boolean isUseWebsocket();
-    public void setUseWebsocket(boolean useWebsocket);
-    public String getSharedAccessToken();
+    public String getSharedAccessToken() throws SecurityException;
     public long getTokenValidSecs();
+    public void setTokenValidSecs(long expiryTime);
     public int getReadTimeoutMillis();
-
-    public String getPathToCertificate();
-    public void setPathToCert(String pathToCertificate);
-
-    public void setUserCertificateString(String userCertificateString);
-    public String getUserCertificateString();
-
-    public void setIotHubSSLContext(IotHubSSLContext iotHubSSLContext);
-    public IotHubSSLContext getIotHubSSLContext();
-
+    
     public void setMessageCallback(MessageCallback callback, Object context);
-
-    public MessageCallback getMessageCallback();
-    public Object getMessageContext();
-    public int getMessageLockTimeoutSecs();
-
-    public void setDeviceMethodMessageCallback(MessageCallback callback, Object context);
-    public MessageCallback getDeviceMethodMessageCallback();
-    public Object getDeviceMethodMessageContext();
-
+    public MessageCallback getDeviceTelemetryMessageCallback();
+    public Object getDeviceTelemetryMessageContext();
+    public void setDeviceMethodsMessageCallback(MessageCallback callback, Object context);
+    public MessageCallback getDeviceMethodsMessageCallback();
+    public Object getDeviceMethodsMessageContext();
     public void setDeviceTwinMessageCallback(MessageCallback callback, Object context);
     public MessageCallback getDeviceTwinMessageCallback();
     public Object getDeviceTwinMessageContext();
-
+    
+    public int getMessageLockTimeoutSecs();
     public boolean needsToRenewSasToken();
+    public AuthType getAuthenticationType();
+    
+    public void setPathToCert(String pathToCertificate) throws IOException, IllegalStateException;
+    public String getPathToCertificate();
+    public void setUserCertificateString(String userCertificateString) throws IOException , IllegalStateException;
+    public String getUserCertificateString();
 }
 ```
 
@@ -59,9 +57,22 @@ public final class DeviceClientConfig
 public DeviceClientConfig(IotHubConnectionString iotHubConnectionString) throws URISyntaxException;
 ```
 
-** SRS_DEVICECLIENTCONFIG_21_033: [**The constructor shall save the IoT Hub hostname, hubname, device ID, device key, and device token, provided in the `iotHubConnectionString`.**] **
+** SRS_DEVICECLIENTCONFIG_34_046: [**If the provided `iotHubConnectionString` does not use x509 authentication, it shall be saved to a new IotHubSasTokenAuthentication object and the authentication type of this shall be set to SASToken.**]**
+
+** SRS_DEVICECLIENTCONFIG_34_048: [**If an exception is thrown when creating the appropriate Authentication object, an IOException shall be thrown containing the details of that exception.**]**
 
 ** SRS_DEVICECLIENTCONFIG_21_034: [**If the provided `iotHubConnectionString` is null, the constructor shall throw IllegalArgumentException.**] **
+
+
+```java
+public DeviceClientConfig(IotHubConnectionString iotHubConnectionString, String publicKeyCertificate, boolean isPathForPublic, String privateKey, boolean isPathForPrivate) throws IOException
+```
+
+** SRS_DEVICECLIENTCONFIG_34_069: [**If the provided connection string is null or does not use x509 auth, and IllegalArgumentException shall be thrown.**] **
+
+** SRS_DEVICECLIENTCONFIG_34_069: [**This function shall generate a new SSLContext and set this to using X509 authentication.**] **
+
+** SRS_DEVICECLIENTCONFIG_34_070: [**If any exceptions are encountered while generating the new SSLContext, an IOException shall be thrown.**] **
 
 
 ### getIotHubHostname
@@ -97,7 +108,9 @@ public String getDeviceId();
 public String getDeviceKey();
 ```
 
-** SRS_DEVICECLIENTCONFIG_11_004: [**The function shall return the device key given in the constructor.**] **
+** SRS_DEVICECLIENTCONFIG_11_004: [**If this is using Sas token authentication, the function shall return the device key given in the constructor.**] **
+
+** SRS_DEVICECLIENTCONFIG_34_054: [**If this is using x509 authentication, the function shall return null.**] **
 
 
 ### getSharedAccessToken
@@ -106,17 +119,17 @@ public String getDeviceKey();
 public String getSharedAccessToken();
 ```
 
-** SRS_DEVICECLIENTCONFIG_25_018: [**The function shall return the SharedAccessToken given in the constructor.**] **
+** SRS_DEVICECLIENTCONFIG_25_018: [**If this is using sas token authentication, the function shall return the SharedAccessToken saved in the sas token authentication object.**] **
 
-** SRS_DEVICECLIENTCONFIG_34_036: [**If this function generates the returned SharedAccessToken from a device key, the previous SharedAccessToken shall be overwritten with the generated value.**] **
+** SRS_DEVICECLIENTCONFIG_34_053: [**If this is using x509 authentication, the function shall return null.**] **
 
 ### getMessageValidSecs
 
 ```java
-public long getMessageValidSecs();
+public long getTokenValidSecs();
 ```
 
-** SRS_DEVICECLIENTCONFIG_11_005: [**The function shall return the value of tokenValidSecs.**] **
+** SRS_DEVICECLIENTCONFIG_11_005: [**If this is using Sas token authentication, then this function shall return the value of tokenValidSecs saved in it and 0 otherwise.**] **
 
 ### setTokenValidSecs
 
@@ -126,37 +139,6 @@ public setTokenValidSecs(long expiryTime);
 
 ** SRS_DEVICECLIENTCONFIG_25_008: [**The function shall set the value of tokenValidSecs.**] **
 
-### getPathToCertificate
-
-```java
-public String getPathToCertificate();
-```
-
-** SRS_DEVICECLIENTCONFIG_25_027: [**The function shall return the value of the path to the certificate.**] **
-
-### setPathToCert
-
-```java
-public void setPathToCert(String pathToCertificate);
-```
-
-** SRS_DEVICECLIENTCONFIG_25_028: [**The function shall set the path to the certificate**] **
-
-### setUserCertificateString
-
-```java
-public void setUserCertificateString(String userCertificateString);
-```
-
-** SRS_DEVICECLIENTCONFIG_25_029: [**The function shall set user certificate String**] **
-
-### getUserCertificateString
-
-```java
-public String getUserCertificateString();
-```
-
-** SRS_DEVICECLIENTCONFIG_25_030: [**The function shall return the value of the user certificate string.**] **
 
 ### setIotHubSSLContext
 
@@ -164,7 +146,10 @@ public String getUserCertificateString();
 public void setIotHubSSLContext(IotHubSSLContext iotHubSSLContext);
 ```
 
-** SRS_DEVICECLIENTCONFIG_25_031: [**The function shall set IotHub SSL Context**] **
+** SRS_DEVICECLIENTCONFIG_34_057: [**If this is using x509 authentication, the function shall save the provided IotHub SSL Context into its x509 authentication object.**] **
+
+** SRS_DEVICECLIENTCONFIG_34_058: [**If this is using sas authentication, the function shall save the provided IotHub SSL Context into its sas authentication object.**] **
+
 
 ### getIotHubSSLContext
 
@@ -172,7 +157,10 @@ public void setIotHubSSLContext(IotHubSSLContext iotHubSSLContext);
 public IotHubSSLContext getIotHubSSLContext();
 ```
 
-** SRS_DEVICECLIENTCONFIG_25_032: [**The function shall return the IotHubSSLContext.**] **
+** SRS_DEVICECLIENTCONFIG_34_051: [**If this is using Sas token Authentication, then this function shall return the IotHubSSLContext saved in its Sas token authentication object.**] **
+
+** SRS_DEVICECLIENTCONFIG_34_052: [**If this is using X509 Authentication, then this function shall return the IotHubSSLContext saved in its X509 authentication object.**] **
+
 
 ### setMessageCallback
 
@@ -226,7 +214,6 @@ public void setDeviceMethodMessageCallback(MessageCallback  callback, Object con
 ```
 
 ** SRS_DEVICECLIENTCONFIG_25_019: [**The function shall set the DeviceMethod message callback.**] ** 
-
 
 ** SRS_DEVICECLIENTCONFIG_25_020: [**The function shall set the DeviceMethod message context.**] **
 
@@ -283,7 +270,10 @@ public Object getDeviceTwinMessageContext();
 public boolean needsToRenewSasToken();
 ```
 
-** SRS_DEVICECLIENTCONFIG_34_035: [**If the saved sas token has expired and there is no device key present, this function shall return true.**] **
+** SRS_DEVICECLIENTCONFIG_34_049: [**If this is using SAS token authentication, this function shall return if that SAS Token authentication needs renewal.**] **
+
+** SRS_DEVICECLIENTCONFIG_34_050: [**If this isn't using SAS token authentication, this function shall return false.**] **
+
 
 ### isUseWebsocket
 
@@ -300,3 +290,65 @@ public void setUseWebsocket(boolean useWebsocket);
 ```
 
 **SRS_DEVICECLIENTCONFIG_25_038: [**The function shall save `useWebsocket`.**]**
+
+
+### getAuthenticationType
+```java
+public AuthType getAuthenticationType();
+```
+
+**SRS_DEVICECLIENTCONFIG_34_039: [**This function shall return the type of authentication that the config is set up to use.**]**
+
+
+### getX509CertificatePair
+```java
+X509CertificatePair getX509CertificatePair();
+```
+
+**SRS_DEVICECLIENTCONFIG_34_045: [**If this is using x509 authentication, this function shall return this object's x509 certificate pair.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_056: [**If this is using sas token authentication, this function shall return null.**]**
+
+
+### setPathToCert
+```java
+public void setPathToCert(String pathToCertificate);
+```
+
+**SRS_DEVICECLIENTCONFIG_34_059: [**If this function is called while this is using Sas token authentication, an IllegalStateException shall be thrown.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_060: [**This function shall create a new SSL context using the new public key certificate.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_061: [**If any exceptions are thrown while creating a new SSL context with the new public key certificate, this function shall throw an IOException.**]**
+
+
+### getPathToCertificate
+```java
+public String getPathToCertificate();
+```
+
+**SRS_DEVICECLIENTCONFIG_34_063: [**If this function is called while this is using Sas token authentication, null shall be returned.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_062: [**This function shall return the saved path to the public key certificate or null if it is not saved.**]**
+
+
+### setUserCertificateString
+```java
+public void setUserCertificateString(String userCertificateString);
+```
+
+**SRS_DEVICECLIENTCONFIG_34_064: [**If this function is called while this is using Sas token authentication, an IllegalStateException shall be thrown.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_065: [**This function shall create a new SSL context using the new public key certificate.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_066: [**If any exceptions are thrown while creating a new SSL context with the new public key certificate, this function shall throw an IOException.**]**
+
+
+### getUserCertificateString
+```java
+public String getUserCertificateString();
+```
+
+**SRS_DEVICECLIENTCONFIG_34_067: [**If this function is called while this is using Sas token authentication, null shall be returned.**]**
+
+**SRS_DEVICECLIENTCONFIG_34_068: [**This function shall return the saved user certificate string.**]**

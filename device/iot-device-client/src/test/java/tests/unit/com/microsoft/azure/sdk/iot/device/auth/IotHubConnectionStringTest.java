@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package tests.unit.com.microsoft.azure.sdk.iot.device;
+package tests.unit.com.microsoft.azure.sdk.iot.device.auth;
 
 import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
 import mockit.Deencapsulation;
@@ -27,7 +27,7 @@ public class IotHubConnectionStringTest
     private static final String VALID_SHARED_ACCESS_KEY = "key+adjkl234j52=";
     private static final String VALID_SHARED_ACCESS_TOKEN = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=" + Long.MAX_VALUE;
     private static final String EXPIRED_SHARED_ACCESS_TOKEN = "SharedAccessSignature sr=sample-iothub-hostname.net%2fdevices%2fsample-device-ID&sig=S3%2flPidfBF48B7%2fOFAxMOYH8rpOneq68nu61D%2fBP6fo%3d&se=0";
-    private static final String IOTHUB_CONNECTION_STRING_CLASS = "com.microsoft.azure.sdk.iot.device.IotHubConnectionString";
+    private static final String IOTHUB_CONNECTION_STRING_CLASS = "com.microsoft.azure.sdk.iot.device.auth.IotHubConnectionString";
 
     private void assertConnectionString(Object iotHubConnectionString, String expectedHostName,
                                         String expectedDeviceId, String expectedSharedAccessKey, String expectedSharedAccessToken)
@@ -226,7 +226,7 @@ public class IotHubConnectionStringTest
 
     /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_017: [If the connection string is not valid, the constructor shall throw an IllegalArgumentException.] */
     /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_002: [A valid `hostName` shall be a valid URI.] */
-    @Test (expected = URISyntaxException.class)
+    @Test (expected = IllegalArgumentException.class)
     public void IotHubConnectionStringHostNameNotURIThrows() throws ClassNotFoundException
     {
         // arrange
@@ -241,7 +241,7 @@ public class IotHubConnectionStringTest
 
     /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_025: [If the parameters for the connection string is not valid, the constructor shall throw an IllegalArgumentException.] */
     /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_002: [A valid `hostName` shall be a valid URI.] */
-    @Test (expected = URISyntaxException.class)
+    @Test (expected = IllegalArgumentException.class)
     public void IotHubConnectionStringParametersHostNameNotURIThrows() throws ClassNotFoundException
     {
         // act
@@ -329,7 +329,7 @@ public class IotHubConnectionStringTest
     }
 
     /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_017: [If the connection string is not valid, the constructor shall throw an IllegalArgumentException.] */
-    /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_005: [A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey`.] */
+    /* Tests_SRS_IOTHUB_CONNECTIONSTRING_21_005: [A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey` unless using x509 Authentication.] */
     @Test (expected = IllegalArgumentException.class)
     public void IotHubConnectionStringMissingAccessKeyAndTokenThrows() throws ClassNotFoundException
     {
@@ -556,7 +556,7 @@ public class IotHubConnectionStringTest
         new NonStrictExpectations()
         {
             {
-                iotHubSasToken.isSasTokenExpired(anyString);
+                iotHubSasToken.isExpired(anyString);
                 result = true;
             }
         };
@@ -574,7 +574,7 @@ public class IotHubConnectionStringTest
         new NonStrictExpectations()
         {
             {
-                iotHubSasToken.isSasTokenExpired(anyString);
+                iotHubSasToken.isExpired(anyString);
                 result = true;
             }
         };
@@ -620,5 +620,23 @@ public class IotHubConnectionStringTest
 
         //act
         Deencapsulation.invoke(iotHubConnectionString, "setSharedAccessToken", "");
+    }
+
+    // Tests_SRS_IOTHUB_CONNECTIONSTRING_21_005: [A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey`.]
+    @Test
+    public void missingSasTokenAndDeviceKeyDoesNotThrowIfUsingX509() throws ClassNotFoundException
+    {
+        //arrange
+        final String connString =
+                "HostName=" + VALID_HOSTNAME + ";DeviceId=" + VALID_DEVICEID + ";x509=true;";
+
+        //act
+        Object iotHubConnectionString = Deencapsulation.newInstance(Class.forName(IOTHUB_CONNECTION_STRING_CLASS),
+                new Class[] {String.class}, connString);
+
+        //assert
+        assertNotNull(iotHubConnectionString);
+
+        //the only other expectation here is that no exception is thrown over a missing sas token and missing device key
     }
 }

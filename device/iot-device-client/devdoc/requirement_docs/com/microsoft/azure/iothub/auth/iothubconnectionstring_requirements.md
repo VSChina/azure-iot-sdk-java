@@ -33,7 +33,7 @@ public class IotHubConnectionString
 **SRS_IOTHUB_CONNECTIONSTRING_21_002: [**A valid `hostName` shall be a valid URI.**]**  
 **SRS_IOTHUB_CONNECTIONSTRING_21_003: [**A valid `hostName` shall contain at least one `.`.**]**  
 **SRS_IOTHUB_CONNECTIONSTRING_21_004: [**A valid `deviceId` shall not be null or empty.**]**  
-**SRS_IOTHUB_CONNECTIONSTRING_21_005: [**A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey`.**]**  
+**SRS_IOTHUB_CONNECTIONSTRING_21_005: [**A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey` unless using x509 Authentication.**]**  
 **SRS_IOTHUB_CONNECTIONSTRING_21_006: [**If provided, the `sharedAccessToken` shall not be null or empty.**]**  
 **SRS_IOTHUB_CONNECTIONSTRING_21_007: [**If provided, the `sharedAccessKey` shall not be null or empty.**]**  
 **SRS_IOTHUB_CONNECTIONSTRING_21_008: [**A valid connectionString shall not contain both `sharedAccessToken` and `sharedAccessKey` at the same time.**]**  

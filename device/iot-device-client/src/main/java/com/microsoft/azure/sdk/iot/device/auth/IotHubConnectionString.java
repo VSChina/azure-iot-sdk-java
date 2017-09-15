@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package com.microsoft.azure.sdk.iot.device;
+package com.microsoft.azure.sdk.iot.device.auth;
 
-import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
+import com.microsoft.azure.sdk.iot.device.CustomLogger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -26,6 +26,8 @@ public class IotHubConnectionString
     /** The shared access signature attribute name in a connection string. */
     private static final String SHARED_ACCESS_TOKEN_ATTRIBUTE = "SharedAccessSignature=";
 
+    private static final String X509_ENABLED_ATTRIBUTE = "x509=true";
+
     /**
      * The charset used for URL-encoding the device ID in the connection
      * string.
@@ -37,17 +39,17 @@ public class IotHubConnectionString
     private String deviceId = null;
     private String sharedAccessKey = null;
     private String sharedAccessToken = null;
+    private boolean isUsingX509 = false;
     private CustomLogger logger = null;
-    
-    
+
     /**
      * CONSTRUCTOR.
      *
      * @param connectionString is the iothub connection string to parse.
-     * @throws IllegalArgumentException if the provided connectionString is {@code null}, empty, or not valid.
-     * @throws URISyntaxException if the hostName in the connection string is not a valid URI.
+     * @throws IllegalArgumentException if the provided connectionString is {@code null}, empty, or not valid or if the hostName in the connection string is not a valid URI.
+     * @throws SecurityException if the provided connection string contains an expired sas token
      */
-    public IotHubConnectionString(String connectionString) throws URISyntaxException, IllegalArgumentException
+    public IotHubConnectionString(String connectionString) throws IllegalArgumentException, SecurityException
     {
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_016: [If the connection string is null or empty, the constructor shall throw an IllegalArgumentException.] */
         if ((connectionString == null) || connectionString.isEmpty())
@@ -71,7 +73,9 @@ public class IotHubConnectionString
                 try
                 {
                     this.deviceId = URLDecoder.decode(urlEncodedDeviceId, CONNECTION_STRING_CHARSET.name());
-                } catch (UnsupportedEncodingException e) {
+                }
+                catch (UnsupportedEncodingException e)
+                {
                     // should never happen, since the encoding is hard-coded.
                     throw new IllegalStateException(e);
                 }
@@ -87,7 +91,7 @@ public class IotHubConnectionString
                 this.sharedAccessToken = attr.substring(SHARED_ACCESS_TOKEN_ATTRIBUTE.length());
 
                 /* Codes_SRS_IOTHUB_CONNECTIONSTRING_34_035: [If the connection string contains an expired SAS Token, throw a SecurityException] */
-                if (IotHubSasToken.isSasTokenExpired(this.sharedAccessToken))
+                if (IotHubSasToken.isExpired(this.sharedAccessToken))
                 {
                     throw new SecurityException("Your SAS Token has expired");
                 }
@@ -95,7 +99,8 @@ public class IotHubConnectionString
         }
 
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_017: [If the connection string is not valid, the constructor shall throw an IllegalArgumentException.] */
-        validateTerms(this.hostName, this.deviceId, this.sharedAccessKey, this.sharedAccessToken);
+        this.isUsingX509 = connectionString.contains(X509_ENABLED_ATTRIBUTE);
+        validateTerms(this.hostName, this.deviceId, this.sharedAccessKey, this.sharedAccessToken, this.isUsingX509);
 
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_012: [The constructor shall save the first part of the IoT Hub hostname as the value of `hubName`, hostname split by `.`.] */
         this.hubName = parseHubName(this.hostName);
@@ -111,16 +116,15 @@ public class IotHubConnectionString
      * @param deviceId the device ID.
      * @param sharedAccessKey the device key.
      * @param sharedAccessToken the shared access token.
-     * @throws URISyntaxException if the IoT Hub hostname does not conform to RFC 3986.
      * @throws IllegalArgumentException if the IoT Hub hostname does not contain
-     * a valid IoT Hub name as its prefix.
+     * a valid IoT Hub name as its prefix or if the IoT Hub hostname does not conform to RFC 3986.
      */
     public IotHubConnectionString(String hostName, String deviceId,
                                   String sharedAccessKey, String sharedAccessToken)
-            throws URISyntaxException, IllegalArgumentException
+            throws IllegalArgumentException
     {
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_025: [If the parameters for the connection string is not valid, the constructor shall throw an IllegalArgumentException.] */
-        validateTerms(hostName, deviceId, sharedAccessKey, sharedAccessToken);
+        validateTerms(hostName, deviceId, sharedAccessKey, sharedAccessToken, false);
 
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_020: [The constructor shall save the IoT Hub hostname as the value of `hostName` in the connection string.] */
         this.hostName = hostName;
@@ -138,7 +142,7 @@ public class IotHubConnectionString
         this.sharedAccessToken = sharedAccessToken;
 
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_34_036: [If the SAS Token has expired, throw a SecurityException.] */
-        if (this.sharedAccessToken != null && IotHubSasToken.isSasTokenExpired(this.sharedAccessToken))
+        if (this.sharedAccessToken != null && IotHubSasToken.isExpired(this.sharedAccessToken))
         {
             throw new SecurityException("Your SAS Token has expired");
         }
@@ -198,11 +202,21 @@ public class IotHubConnectionString
     }
 
     /**
+     * Getter for UsingX509
+     *
+     * @return The value of UsingX509
+     */
+    public boolean isUsingX509()
+    {
+        return isUsingX509;
+    }
+
+    /**
      * Setter for the shared access token
      * @param sharedAccessToken the new token value to set
      * @throws IllegalArgumentException if the provided value is null or empty
      */
-    void setSharedAccessToken(String sharedAccessToken) throws IllegalArgumentException
+    public void setSharedAccessToken(String sharedAccessToken) throws IllegalArgumentException
     {
         if (sharedAccessToken == null || sharedAccessToken.isEmpty())
         {
@@ -216,8 +230,8 @@ public class IotHubConnectionString
 
 
     private static void validateTerms(String hostName, String deviceId,
-                               String sharedAccessKey, String sharedAccessToken)
-            throws URISyntaxException, IllegalArgumentException
+                                      String sharedAccessKey, String sharedAccessToken, boolean usingX509)
+            throws IllegalArgumentException
     {
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_001: [A valid `hostName` shall not be null or empty.] */
         if ((hostName == null) || hostName.isEmpty())
@@ -226,7 +240,14 @@ public class IotHubConnectionString
         }
 
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_002: [A valid `hostName` shall be a valid URI.] */
-        new URI(hostName);
+        try
+        {
+            new URI(hostName);
+        }
+        catch (URISyntaxException e)
+        {
+            throw new IllegalArgumentException("Invalid hostname");
+        }
 
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_003: [A valid `hostName` shall contain at least one `.`.] */
         parseHubName(hostName);
@@ -240,16 +261,17 @@ public class IotHubConnectionString
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_008: [A valid connectionString shall not contain both `sharedAccessToken` and `sharedAccessKey` at the same time.] */
         if((sharedAccessKey != null) && (sharedAccessToken != null))
         {
-            throw new IllegalArgumentException("Either of device key or Shared Access Signature should be provided.");
+            throw new IllegalArgumentException("Either of device key or Shared Access Signature should be provided, but not both.");
         }
 
-        /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_005: [A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey`.] */
+        /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_005: [A valid connectionString shall contain a `sharedAccessToken` or a `sharedAccessKey` unless using x509 Authentication.] */
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_006: [If provided, the `sharedAccessToken` shall not be null or empty.] */
         /* Codes_SRS_IOTHUB_CONNECTIONSTRING_21_007: [If provided, the `sharedAccessKey` shall not be null or empty.] */
-        if (((sharedAccessKey == null) || sharedAccessKey.isEmpty()) &&
-                ((sharedAccessToken == null) || sharedAccessToken.isEmpty()))
+        if (!usingX509
+                && ((sharedAccessKey == null) || sharedAccessKey.isEmpty())
+                && ((sharedAccessToken == null) || sharedAccessToken.isEmpty()))
         {
-            throw new IllegalArgumentException("Device key and Shared Access Signature both cannot be null.");
+            throw new IllegalArgumentException("Device key and Shared Access Signature both cannot be null unless using x509 authentication.");
         }
     }
 

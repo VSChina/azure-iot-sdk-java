@@ -4,6 +4,7 @@
 package tests.unit.com.microsoft.azure.sdk.iot.device.transport.https;
 
 import com.microsoft.azure.sdk.iot.device.*;
+import com.microsoft.azure.sdk.iot.device.auth.IotHubSSLContext;
 import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
 import com.microsoft.azure.sdk.iot.device.net.*;
 import com.microsoft.azure.sdk.iot.device.transport.https.*;
@@ -54,7 +55,7 @@ public class HttpsIotHubConnectionTest
             {
                 mockConfig.getSharedAccessToken();
                 result=testSasToken;
-                mockSasToken.isSasTokenExpired(testSasToken);
+                mockSasToken.isExpired(testSasToken);
                 result = false;
             }
         };
@@ -183,6 +184,8 @@ public class HttpsIotHubConnectionTest
             {
                 mockConfig.getReadTimeoutMillis();
                 result = readTimeoutMillis;
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
             }
         };
 
@@ -244,6 +247,8 @@ public class HttpsIotHubConnectionTest
                 result = tokenStr;
                 mockConfig.getSharedAccessToken();
                 result = tokenStr;
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
             }
         };
 
@@ -274,6 +279,8 @@ public class HttpsIotHubConnectionTest
                 result = mockRequest;
                 mockUri.getPath();
                 result = path;
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
             }
         };
 
@@ -304,6 +311,8 @@ public class HttpsIotHubConnectionTest
                 result = mockRequest;
                 mockMsg.getContentType();
                 result = contentType;
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
             }
         };
 
@@ -1570,8 +1579,10 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
-                mockSasToken.isSasTokenExpired(testSasToken);
+                mockSasToken.isExpired(testSasToken);
                 result = true;
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
             }
         };
 
@@ -1592,7 +1603,7 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
-                mockSasToken.isSasTokenExpired(testSasToken);
+                mockSasToken.isExpired(testSasToken);
                 result = true;
             }
         };
@@ -1614,7 +1625,7 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
-                mockSasToken.isSasTokenExpired(testSasToken);
+                mockSasToken.isExpired(testSasToken);
                 result = true;
             }
         };
@@ -1632,6 +1643,14 @@ public class HttpsIotHubConnectionTest
     {
         //arrange
         HttpsIotHubConnection connection = new HttpsIotHubConnection(mockConfig);
+
+        new NonStrictExpectations()
+        {
+            {
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
+            }
+        };
 
         //act
         connection.sendEvent(mockMsg);
@@ -1701,7 +1720,7 @@ public class HttpsIotHubConnectionTest
                 result = "test-device-id";
                 mockConfig.getSharedAccessToken();
                 result = sasToken;
-                IotHubSasToken.isSasTokenExpired(sasToken);
+                IotHubSasToken.isExpired(sasToken);
                 result = true;
             }
         };

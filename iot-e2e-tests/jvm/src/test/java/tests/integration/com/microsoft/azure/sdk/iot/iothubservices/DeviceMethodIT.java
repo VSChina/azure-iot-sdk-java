@@ -5,6 +5,7 @@
 
 package tests.integration.com.microsoft.azure.sdk.iot.iothubservices;
 
+import com.microsoft.azure.sdk.iot.device.DeviceClient;
 import com.microsoft.azure.sdk.iot.device.IotHubClientProtocol;
 import com.microsoft.azure.sdk.iot.service.RegistryManager;
 import com.microsoft.azure.sdk.iot.service.devicetwin.DeviceMethod;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -36,8 +38,16 @@ import static org.junit.Assert.assertNotNull;
  */
 public class DeviceMethodIT
 {
-    private static String iotHubConnectionStringEnvVarName = "IOTHUB_CONNECTION_STRING";
+    private static String IOT_HUB_CONNECTION_STRING_ENV_VAR_NAME = "IOTHUB_CONNECTION_STRING";
     private static String iotHubConnectionString = "";
+
+    private static String PUBLIC_KEY_CERTIFICATE_ENV_VAR_NAME = "IOTHUB_E2E_X509_CERT_BASE64";
+    private static String PRIVATE_KEY_ENV_VAR_NAME = "IOTHUB_E2E_X509_PRIVATE_KEY_BASE64";
+    private static String X509_THUMBPRINT_ENV_VAR_NAME = "IOTHUB_E2E_X509_THUMBPRINT";
+    private static String publicKeyCert;
+    private static String privateKey;
+    private static String x509Thumbprint;
+
     private static DeviceMethod methodServiceClient;
 
     private static final int MAX_DEVICES = 1;
@@ -49,6 +59,7 @@ public class DeviceMethodIT
     private static final String PAYLOAD_STRING = "This is a valid payload";
 
     private static List<DeviceTestManager> devices = new LinkedList<>();
+    private static DeviceTestManager x509Device;
 
     private static final int NUMBER_INVOKES_PARALLEL = 10;
 
@@ -56,18 +67,19 @@ public class DeviceMethodIT
     public static void setUp() throws NoSuchAlgorithmException, IotHubException, IOException, URISyntaxException, InterruptedException
     {
         Map<String, String> env = System.getenv();
-        for (String envName : env.keySet())
+        iotHubConnectionString = env.get(IOT_HUB_CONNECTION_STRING_ENV_VAR_NAME);
+        privateKey = env.get(PRIVATE_KEY_ENV_VAR_NAME);
+        publicKeyCert = env.get(PUBLIC_KEY_CERTIFICATE_ENV_VAR_NAME);
+        x509Thumbprint = env.get(X509_THUMBPRINT_ENV_VAR_NAME);
+
+        if (iotHubConnectionString == null || privateKey == null || publicKeyCert == null || x509Thumbprint == null)
         {
-            if (envName.equals(iotHubConnectionStringEnvVarName.toString()))
-            {
-                iotHubConnectionString = env.get(envName);
-                break;
-            }
+            fail("Missing necessary environment variables");
         }
 
         if ((iotHubConnectionString == null) || iotHubConnectionString.isEmpty())
         {
-            throw new IllegalArgumentException("Environment variable is not set: " + iotHubConnectionStringEnvVarName);
+            throw new IllegalArgumentException("Environment variable is not set: " + IOT_HUB_CONNECTION_STRING_ENV_VAR_NAME);
         }
 
         methodServiceClient = DeviceMethod.createFromConnectionString(iotHubConnectionString);
@@ -78,6 +90,9 @@ public class DeviceMethodIT
         {
             devices.add(new DeviceTestManager(registryManager, DEVICE_ID_NAME.concat("-" + i), IotHubClientProtocol.MQTT));
         }
+
+        x509Device = new DeviceTestManager(registryManager, DEVICE_ID_NAME.concat("-x509"), IotHubClientProtocol.MQTT, publicKeyCert, privateKey, x509Thumbprint);
+
     }
 
     @Before
@@ -87,6 +102,8 @@ public class DeviceMethodIT
         {
             device.clearDevice();
         }
+
+        x509Device.clearDevice();
     }
 
     protected static class RunnableInvoke implements Runnable
@@ -149,6 +166,8 @@ public class DeviceMethodIT
         {
             device.stop();
         }
+
+        x509Device.stop();
     }
 
     @Test
@@ -377,5 +396,19 @@ public class DeviceMethodIT
             // Don't do anything, expected throw.
         }
         deviceTestManger.restartDevice();
+    }
+
+    @Test
+    public void invokeMethodUsingX509Succeed() throws IOException, InterruptedException, IotHubException
+    {
+        // Act
+        MethodResult result = methodServiceClient.invoke(x509Device.getDeviceId(), DeviceEmulator.METHOD_LOOPBACK, RESPONSE_TIMEOUT, CONNECTION_TIMEOUT, PAYLOAD_STRING);
+        x509Device.waitIotHub(1, 10);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals((long)DeviceEmulator.METHOD_SUCCESS, (long)result.getStatus());
+        assertEquals(DeviceEmulator.METHOD_LOOPBACK + ":" + PAYLOAD_STRING, result.getPayload());
+        assertEquals(0, x509Device.getStatusError());
     }
 }

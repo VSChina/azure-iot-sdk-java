@@ -95,7 +95,7 @@ public class HttpsIotHubConnection
 
             //Codes_SRS_HTTPSIOTHUBCONNECTION_34_055: [This function shall retrieve a sas token from its config to use in the https request header.]
             String sasToken = this.config.getSharedAccessToken();
-            if (IotHubSasToken.isSasTokenExpired(sasToken))
+            if (IotHubSasToken.isExpired(sasToken))
             {
                 //Codes_SRS_HTTPSIOTHUBCONNECTION_34_052: [If the SAS token used by this has expired, the function shall return a ResponseMessage object with the IotHubStatusCode UNAUTHORIZED.]
                 return new ResponseMessage("Your sas token has expired".getBytes(), IotHubStatusCode.UNAUTHORIZED);
@@ -157,7 +157,7 @@ public class HttpsIotHubConnection
 
             //Codes_SRS_HTTPSIOTHUBCONNECTION_34_056: [This function shall retrieve a sas token from its config to use in the https request header.]
             String sasToken = this.config.getSharedAccessToken();
-            if (IotHubSasToken.isSasTokenExpired(sasToken))
+            if (IotHubSasToken.isExpired(sasToken))
             {
                 //Codes_SRS_HTTPSIOTHUBCONNECTION_34_053: [If the SAS token used by this has expired, the function shall return a ResponseMessage object with the IotHubStatusCode UNAUTHORIZED.]
                 return new ResponseMessage("Your sas token has expired".getBytes(), IotHubStatusCode.UNAUTHORIZED);
@@ -207,7 +207,7 @@ public class HttpsIotHubConnection
 
             //Codes_SRS_HTTPSIOTHUBCONNECTION_34_057: [This function shall retrieve a sas token from its config to use in the https request header.]
             String sasToken = this.config.getSharedAccessToken();
-            if (IotHubSasToken.isSasTokenExpired(sasToken))
+            if (IotHubSasToken.isExpired(sasToken))
             {
                 //Codes_SRS_HTTPSIOTHUBCONNECTION_34_054: [If the SAS token used by this has expired, the function shall return a Message object with a body of "Your sas token has expired".]
                 return new Message("Your sas token has expired".getBytes());
@@ -334,7 +334,7 @@ public class HttpsIotHubConnection
             }
 
             String sasToken = this.config.getSharedAccessToken();
-            if (IotHubSasToken.isSasTokenExpired(sasToken))
+            if (IotHubSasToken.isExpired(sasToken))
             {
                 //Codes_SRS_HTTPSIOTHUBCONNECTION_34_058: [If the saved SAS token for this connection has expired and cannot be renewed, this function shall throw a SecurityException.]
                 throw new SecurityException("Your SAS token has expired");

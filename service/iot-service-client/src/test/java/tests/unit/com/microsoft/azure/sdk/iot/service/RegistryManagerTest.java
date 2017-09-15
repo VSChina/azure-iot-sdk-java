@@ -393,7 +393,7 @@ public class RegistryManagerTest
         assertEquals(expectedDeviceConnectionString, returnDeviceConnectionString);
     }
 
-    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, or if deviceId or primary key are empty or null]
+    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, if deviceId is null, or primary key and primary thumbprint are empty or null]
     // Assert
     @Test (expected = IllegalArgumentException.class)
     public void getDeviceConnectionString_null_device_throw() throws Exception
@@ -404,7 +404,7 @@ public class RegistryManagerTest
         registryManager.getDeviceConnectionString(null);
     }
 
-    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, or if deviceId or primary key are empty or null]
+    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, if deviceId is null, or primary key and primary thumbprint are empty or null]
     // Assert
     @Test (expected = IllegalArgumentException.class)
     public void getDeviceConnectionString_null_deviceId_throw() throws Exception
@@ -433,7 +433,7 @@ public class RegistryManagerTest
         registryManager.getDeviceConnectionString(returnDevice);
     }
 
-    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, or if deviceId or primary key are empty or null]
+    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, if deviceId is null, or primary key and primary thumbprint are empty or null]
     // Assert
     @Test (expected = IllegalArgumentException.class)
     public void getDeviceConnectionString_empty_deviceId_throw() throws Exception
@@ -462,7 +462,7 @@ public class RegistryManagerTest
         registryManager.getDeviceConnectionString(returnDevice);
     }
 
-    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, or if deviceId or primary key are empty or null]
+    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, if deviceId is null, or primary key and primary thumbprint are empty or null]
     // Assert
     @Test (expected = IllegalArgumentException.class)
     public void getDeviceConnectionString_null_deviceKey_throw() throws Exception
@@ -491,7 +491,7 @@ public class RegistryManagerTest
         registryManager.getDeviceConnectionString(returnDevice);
     }
 
-    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, or if deviceId or primary key are empty or null]
+    // Tests_SRS_SERVICE_SDK_JAVA_REGISTRYMANAGER_21_086: [The function shall throw IllegalArgumentException if the input device is null, if deviceId is null, or primary key and primary thumbprint are empty or null]
     // Assert
     @Test (expected = IllegalArgumentException.class)
     public void getDeviceConnectionString_empty_deviceKey_throw() throws Exception

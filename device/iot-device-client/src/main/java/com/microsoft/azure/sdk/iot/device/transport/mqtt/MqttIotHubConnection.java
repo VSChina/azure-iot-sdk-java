@@ -14,7 +14,6 @@ import com.microsoft.azure.sdk.iot.device.transport.TransportUtils;
 import java.io.IOException;
 import java.net.URLEncoder;
 
-
 public class MqttIotHubConnection
 {
     /** The MQTT connection lock. */
@@ -72,11 +71,15 @@ public class MqttIotHubConnection
             {
                 throw new IllegalArgumentException("hubName cannot be null or empty.");
             }
-            if (config.getDeviceKey() == null || config.getDeviceKey().length() == 0)
+            if (config.getDeviceKey() == null || config.getDeviceKey().isEmpty())
             {
-                if(config.getSharedAccessToken() == null || config.getSharedAccessToken().length() == 0)
+                if(config.getSharedAccessToken() == null || config.getSharedAccessToken().isEmpty())
                 {
-                    throw new IllegalArgumentException("Both deviceKey and shared access signature cannot be null or empty.");
+                    if (config.getAuthenticationType() == DeviceClientConfig.AuthType.SAS_TOKEN)
+                    {
+                        //Codes_SRS_MQTTIOTHUBCONNECTION_34_020: [If the config has no shared access token, device key, or x509 certificates, this constructor shall throw an IllegalArgumentException.]
+                        throw new IllegalArgumentException("Must have a deviceKey, a shared access token, or x509 certificate saved.");
+                    }
                 }
             }
 
@@ -191,12 +194,12 @@ public class MqttIotHubConnection
 
             this.state = State.CLOSED;
         }
- 
+
         catch (Exception e)
         {
             this.state = State.CLOSED;
         }
-       
+
     }
 
     /**

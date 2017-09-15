@@ -32,6 +32,8 @@ public MqttIotHubConnection(DeviceClientConfig config)
 
 **SRS_MQTTIOTHUBCONNECTION_15_003: [**The constructor shall throw a new IllegalArgumentException if any of the parameters of the configuration is null or empty.**]**
 
+**SRS_MQTTIOTHUBCONNECTION_34_020: [**If the config has no shared access token, device key, or x509 certificates, this constructor shall throw an IllegalArgumentException.**]**
+
 
 ### open
 

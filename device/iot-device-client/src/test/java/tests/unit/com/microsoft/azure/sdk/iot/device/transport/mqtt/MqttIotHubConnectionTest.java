@@ -4,6 +4,7 @@
 package tests.unit.com.microsoft.azure.sdk.iot.device.transport.mqtt;
 
 import com.microsoft.azure.sdk.iot.device.*;
+import com.microsoft.azure.sdk.iot.device.auth.IotHubSSLContext;
 import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
 import com.microsoft.azure.sdk.iot.device.net.IotHubUri;
 import com.microsoft.azure.sdk.iot.device.transport.IotHubTransportMessage;
@@ -162,50 +163,6 @@ public class MqttIotHubConnectionTest
                 result = null;
                 mockConfig.getDeviceKey();
                 result = deviceKey;
-            }
-        };
-
-        new MqttIotHubConnection(mockConfig);
-    }
-
-    // Tests_SRS_MQTTIOTHUBCONNECTION_15_003: [The constructor shall throw a new IllegalArgumentException
-    // if any of the parameters of the configuration is null or empty.]
-    @Test(expected = IllegalArgumentException.class)
-    public void constructorThrowsIllegalArgumentExceptionIfUserNameIsEmpty()
-    {
-        new NonStrictExpectations()
-        {
-            {
-                mockConfig.getIotHubHostname();
-                result = iotHubHostName;
-                mockConfig.getIotHubName();
-                result = hubName;
-                mockConfig.getDeviceId();
-                result = deviceId;
-                mockConfig.getDeviceKey();
-                result = "";
-            }
-        };
-
-        new MqttIotHubConnection(mockConfig);
-    }
-
-    // Tests_SRS_MQTTIOTHUBCONNECTION_15_003: [The constructor shall throw a new IllegalArgumentException
-    // if any of the parameters of the configuration is null or empty.]
-    @Test(expected = IllegalArgumentException.class)
-    public void constructorThrowsIllegalArgumentExceptionIfUserNameIsNull()
-    {
-        new NonStrictExpectations()
-        {
-            {
-                mockConfig.getIotHubHostname();
-                result = iotHubHostName;
-                mockConfig.getIotHubName();
-                result = hubName;
-                mockConfig.getDeviceId();
-                result = deviceId;
-                mockConfig.getDeviceKey();
-                result = null;
             }
         };
 
@@ -1042,6 +999,35 @@ public class MqttIotHubConnectionTest
 
         connection.receiveMessage();
     }
+
+    //Tests_SRS_MQTTIOTHUBCONNECTION_34_020: [If the config has no shared access token, device key, or x509 certificates, this constructor shall throw an IllegalArgumentException.]
+    @Test (expected = IllegalArgumentException.class)
+    public void constructorConfigMissingTokenKeyAndCertThrowsIllegalArgument()
+    {
+        //arrange
+        new NonStrictExpectations()
+        {
+            {
+                mockConfig.getIotHubHostname();
+                result = "someValidHost";
+                mockConfig.getDeviceId();
+                result = "someValidDeviceId";
+                mockConfig.getIotHubName();
+                result = "someValidHubName";
+
+                mockConfig.getDeviceKey();
+                result = null;
+                mockConfig.getSharedAccessToken();
+                result = null;
+                mockConfig.getAuthenticationType();
+                result = DeviceClientConfig.AuthType.SAS_TOKEN;
+            }
+        };
+
+        //act
+        new MqttIotHubConnection(mockConfig);
+    }
+
 
     private void baseExpectations()
     {

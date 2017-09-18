@@ -12,6 +12,7 @@ Allows a single logical or physical device to connect to an IoT Hub.
 public final class DeviceClient
 {
     public DeviceClient(String connString, IotHubClientProtocol protocol) throws URISyntaxException;
+    public DeviceClient(String connString, IotHubClientProtocol protocol, String publicKeyCertificate, boolean isPathForPublic, String privateKey, boolean isPathForPrivate) throws IOException, IllegalArgumentException;
 
     public void open() throws IOException;
     public void close() throws IOException;
@@ -56,15 +57,15 @@ public DeviceClient(String connString, IotHubClientProtocol protocol) throws URI
 public DeviceClient(String connString, IotHubClientProtocol protocol, String publicKeyCertificate, boolean isPathForPublic, String privateKey, boolean isPathForPrivate) throws IOException, IllegalArgumentException;
 ```
 
-**SRS_DEVICECLIENT_21_058: [**The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.**]**  
+**SRS_DEVICECLIENT_34_058: [**The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.**]**  
 
-**SRS_DEVICECLIENT_21_059: [**The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.**]**  
+**SRS_DEVICECLIENT_34_059: [**The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.**]**  
 
-**SRS_DEVICECLIENT_21_060: [**The constructor shall save the connection configuration using the object DeviceClientConfig.**]**  
+**SRS_DEVICECLIENT_34_060: [**The constructor shall save the connection configuration using the object DeviceClientConfig.**]**  
 
-**SRS_DEVICECLIENT_21_061: [**If the connection string is null or empty, the function shall throw an IllegalArgumentException.**]**  
+**SRS_DEVICECLIENT_34_061: [**If the connection string is null or empty, the function shall throw an IllegalArgumentException.**]**  
 
-**SRS_DEVICECLIENT_21_062: [**If protocol is null, the function shall throw an IllegalArgumentException.**]**  
+**SRS_DEVICECLIENT_34_062: [**If protocol is null, the function shall throw an IllegalArgumentException.**]**  
 
 **SRS_DEVICECLIENT_34_063: [**This function shall save the provided certificate and key within its config.**]**
 

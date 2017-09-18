@@ -285,6 +285,7 @@ public class SendReceiveX509
             }
             catch (Exception e)
             {
+                System.out.print(e.getMessage());
                 e.printStackTrace(); // Trace the exception
             }
         }
@@ -296,7 +297,6 @@ public class SendReceiveX509
         {
           Thread.sleep(D2C_MESSAGE_TIMEOUT);
         }
-      
         catch (InterruptedException e)
         {
           e.printStackTrace();

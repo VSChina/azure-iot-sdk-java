@@ -102,9 +102,9 @@ public class DeviceClientTest
         };
     }
 
-    //Tests_SRS_DEVICECLIENT_21_058: [The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.]
-    //Tests_SRS_DEVICECLIENT_21_059: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.]
-    //Tests_SRS_DEVICECLIENT_21_060: [The constructor shall save the connection configuration using the object DeviceClientConfig.]
+    //Tests_SRS_DEVICECLIENT_34_058: [The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.]
+    //Tests_SRS_DEVICECLIENT_34_059: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.]
+    //Tests_SRS_DEVICECLIENT_34_060: [The constructor shall save the connection configuration using the object DeviceClientConfig.]
     //Tests_SRS_DEVICECLIENT_34_063: [This function shall save the provided certificate and key within its config.]
     @Test
     public void constructorSuccessX509() throws URISyntaxException, IOException
@@ -156,7 +156,7 @@ public class DeviceClientTest
         new DeviceClient(connString, protocol);
     }
 
-    //Tests_SRS_DEVICECLIENT_21_061: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.]
+    //Tests_SRS_DEVICECLIENT_34_061: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.]
     @Test (expected = IllegalArgumentException.class)
     public void x509ConstructorNullConnectionStringThrows() throws URISyntaxException, IOException
     {
@@ -181,7 +181,7 @@ public class DeviceClientTest
         new DeviceClient(connString, protocol);
     }
 
-    //Tests_SRS_DEVICECLIENT_21_062: [If protocol is null, the function shall throw an IllegalArgumentException.]
+    //Tests_SRS_DEVICECLIENT_34_062: [If protocol is null, the function shall throw an IllegalArgumentException.]
     @Test (expected = IllegalArgumentException.class)
     public void x509ConstructorEmptyConnectionStringThrows() throws URISyntaxException, IOException
     {

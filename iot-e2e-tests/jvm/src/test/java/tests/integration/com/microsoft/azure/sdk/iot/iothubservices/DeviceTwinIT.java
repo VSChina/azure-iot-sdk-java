@@ -201,7 +201,7 @@ public class DeviceTwinIT
     {
         // set up twin on DeviceClient
         /*
-            Because of the bug in device client on MQTT, we cannot have multiple device client open
+            Because of the limitation in device client on MQTT, we cannot have multiple device client open
             in the main thread at the same time. Hence restricting to use single device client.
          */
         if (deviceClient == null)
@@ -225,7 +225,7 @@ public class DeviceTwinIT
     {
         // set up twin on DeviceClient
         /*
-            Because of the bug in device client on MQTT, we cannot have multiple device client open
+            Because of the limitation in device client on MQTT, we cannot have multiple device client open
             in the main thread at the same time. Hence restricting to use single device client.
          */
         if (x509DeviceClient == null)

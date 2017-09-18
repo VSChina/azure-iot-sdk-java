@@ -511,6 +511,7 @@ public final class DeviceClientConfig
     /**
      * Setter for the providing trusted certificate.
      * @param pathToCertificate path to the certificate for one way authentication.
+     * @deprecated as of release 1.4.35 this function is deprecated and is replaced by the constructor that takes a public key certificate and private key.
      * @throws IOException if there was an exception thrown when creating the SSL Context with the new certificate
      * @throws IllegalStateException if this function is called when this is using sas token authentication
      */
@@ -539,6 +540,7 @@ public final class DeviceClientConfig
 
     /**
      * Getter for the path to the certificate. If using sas token authentication, this function shall return false
+     * @deprecated as of release 1.4.35 this function is deprecated and is replaced by getX509CertificatePair.
      * @return the path to certificate.
      */
     @Deprecated
@@ -559,6 +561,7 @@ public final class DeviceClientConfig
     /**
      * Setter for the user trusted certificate
      * @param userCertificateString valid user trusted certificate string
+     * @deprecated as of release 1.4.35 this function is deprecated and is replaced by the constructor that takes a public key certificate and private key.
      * @throws IOException if there is an exception thrown while creating the SSL context using the new certificate string
      * @throws IllegalStateException if this function is called when the config is using sas token authentication
      */
@@ -587,6 +590,7 @@ public final class DeviceClientConfig
 
     /**
      * Getter for the user trusted certificate
+     * @deprecated as of release 1.4.35 this function is deprecated and is replaced by getX509CertificatePair.
      * @return user trusted certificate as string
      */
     @Deprecated

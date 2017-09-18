@@ -156,11 +156,11 @@ public final class DeviceClient implements Closeable
      */
     public DeviceClient(String connString, IotHubClientProtocol protocol, String publicKeyCertificate, boolean isPathForPublic, String privateKey, boolean isPathForPrivate) throws IOException, IllegalArgumentException, SecurityException
     {
-        //Codes_SRS_DEVICECLIENT_21_058: [The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.]
-        //Codes_SRS_DEVICECLIENT_21_059: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.]
-        //Codes_SRS_DEVICECLIENT_21_060: [The constructor shall save the connection configuration using the object DeviceClientConfig.]
-        //Codes_SRS_DEVICECLIENT_21_061: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.]
-        //Codes_SRS_DEVICECLIENT_21_062: [If protocol is null, the function shall throw an IllegalArgumentException.]
+        //Codes_SRS_DEVICECLIENT_34_058: [The constructor shall interpret the connection string as a set of key-value pairs delimited by ';', using the object IotHubConnectionString.]
+        //Codes_SRS_DEVICECLIENT_34_059: [The constructor shall initialize the IoT Hub transport for the protocol specified, creating a instance of the deviceIO.]
+        //Codes_SRS_DEVICECLIENT_34_060: [The constructor shall save the connection configuration using the object DeviceClientConfig.]
+        //Codes_SRS_DEVICECLIENT_34_061: [If the connection string is null or empty, the function shall throw an IllegalArgumentException.]
+        //Codes_SRS_DEVICECLIENT_34_062: [If protocol is null, the function shall throw an IllegalArgumentException.]
         //Codes_SRS_DEVICECLIENT_34_063: [This function shall save the provided certificate and key within its config.]
         commonConstructorSetup(connString, protocol, publicKeyCertificate, isPathForPublic, privateKey, isPathForPrivate);
     }

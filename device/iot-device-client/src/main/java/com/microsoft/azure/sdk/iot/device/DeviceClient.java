@@ -279,6 +279,7 @@ public final class DeviceClient implements Closeable
     {
         /* Codes_SRS_DEVICECLIENT_21_010: [The sendEventAsync shall asynchronously send the message using the deviceIO connection.] */
         /* Codes_SRS_DEVICECLIENT_21_011: [If starting to send via deviceIO is not successful, the sendEventAsync shall bypass the threw exception.] */
+        deviceDiagnostic.addDiagnosticInfoIfNecessary(message);
         deviceIO.sendEventAsync(message, callback, callbackContext);
 
         logger.LogInfo("Message with messageid %s along with callback and callbackcontext is added to the queue, method name is %s ", message.getMessageId(), logger.getMethodName());

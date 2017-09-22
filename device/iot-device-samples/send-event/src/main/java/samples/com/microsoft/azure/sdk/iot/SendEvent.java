@@ -132,6 +132,7 @@ public class SendEvent
         System.out.format("Using communication protocol %s.\n", protocol.name());
 
         DeviceClient client = new DeviceClient(connString, protocol);
+        client.setOption("SetDiagnosticSamplingPercentage",20);
         if (pathToCertificate != null )
         {
             client.setOption("SetCertificatePath", pathToCertificate );
@@ -175,6 +176,12 @@ public class SendEvent
             catch (Exception e)
             {
                  e.printStackTrace(); // Trace the exception 
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
         }

@@ -7,10 +7,7 @@ import com.microsoft.azure.sdk.iot.device.*;
 import com.microsoft.azure.sdk.iot.device.DeviceTwin.*;
 import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
 import com.microsoft.azure.sdk.iot.device.fileupload.FileUpload;
-import mockit.Deencapsulation;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
-import mockit.Verifications;
+import mockit.*;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -33,6 +30,9 @@ public class DeviceClientTest
 
     @Mocked
     DeviceIO mockDeviceIO;
+
+//    @Mocked
+//    DeviceClientDiagnostic mockDeviceDiagnostic;
 
     @Mocked
     IotHubSasToken mockIoTHubSasToken;
@@ -94,6 +94,8 @@ public class DeviceClientTest
                 Deencapsulation.newInstance("com.microsoft.azure.sdk.iot.device.DeviceIO",
                         new Class[] {DeviceClientConfig.class, IotHubClientProtocol.class, long.class, long.class},
                         (DeviceClientConfig)any, protocol, SEND_PERIOD_MILLIS, RECEIVE_PERIOD_MILLIS_AMQPS);
+                times = 1;
+                new DeviceClientDiagnostic();
                 times = 1;
             }
         };
@@ -1769,6 +1771,63 @@ public class DeviceClientTest
 
             }
         };
+    }
+
+    // zhiqing
+    @Test
+    public void setOptionDiagnosticSamplingPercentageSucceeds(@Mocked final DeviceClientDiagnostic mockDeviceDiagnostic)
+            throws URISyntaxException {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        final Map<String, Object> context = new HashMap<>();
+        DeviceClient client = new DeviceClient(connString, protocol);
+        final Integer value = 30;
+
+        // act
+        client.setOption("SetDiagnosticSamplingPercentage",value);
+
+        // assert
+        new Verifications()
+        {
+            {
+                mockDeviceDiagnostic.setDiagSamplingPercentage(value);
+                times = 1;
+            }
+        };
+    }
+
+    // zhiqing
+    @Test(expected = IllegalArgumentException.class)
+    public void setOptionDiagnosticSamplingPercentageWithStringInsteadOfIntegerFails()
+            throws IOException, URISyntaxException
+    {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        final Map<String, Object> context = new HashMap<>();
+        DeviceClient client = new DeviceClient(connString, protocol);
+
+        // act
+        client.setOption("SetDiagnosticSamplingPercentage","101");
+    }
+
+    // zhiqing
+    @Test(expected = IllegalArgumentException.class)
+    public void setOptionDiagnosticSamplingPercentageWithIllegalValueFails()
+            throws IOException, URISyntaxException
+    {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        final Map<String, Object> context = new HashMap<>();
+        DeviceClient client = new DeviceClient(connString, protocol);
+
+        // act
+        client.setOption("SetDiagnosticSamplingPercentage",101);
     }
 
     //Tests_SRS_DEVICECLIENT_34_046: [If The provided connection string contains an expired SAS token, throw a SecurityException.]

@@ -249,6 +249,7 @@ public class IotHubConnectionString
         if (((sharedAccessKey == null) || sharedAccessKey.isEmpty()) &&
                 ((sharedAccessToken == null) || sharedAccessToken.isEmpty()))
         {
+            System.out.println("mj");
             throw new IllegalArgumentException("Device key and Shared Access Signature both cannot be null.");
         }
     }

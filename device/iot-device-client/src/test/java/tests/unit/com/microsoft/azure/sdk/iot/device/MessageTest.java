@@ -297,6 +297,7 @@ public class MessageTest
     // Tests_SRS_MESSAGE_34_039: [The function shall return the message's DeliveryAcknowledgement.]
     // Tests_SRS_MESSAGE_34_037: [The function shall return the message's user ID.]
     // Tests_SRS_MESSAGE_34_041: [The function shall return the message's To value.]
+    // zhiqing
     @Test
     public void testPropertyGettersAndSetters()
     {
@@ -305,16 +306,22 @@ public class MessageTest
         MessageType type = MessageType.DEVICE_TELEMETRY;
         String messageId = "1234";
         String correlationId = "6789";
+        String diagnosticId = "diag";
+        String diagnosticCreationTimeUtc = "0000000000.000";
 
         //act
         msg.setMessageType(type);
         msg.setCorrelationId(correlationId);
         msg.setMessageId(messageId);
+        msg.setDiagnosticId(diagnosticId);
+        msg.setDiagnosticCreationTimeUtc(diagnosticCreationTimeUtc);
 
         //assert
         assertEquals(type, msg.getMessageType());
         assertEquals(correlationId, msg.getCorrelationId());
         assertEquals(messageId, msg.getMessageId());
+        assertEquals(diagnosticId,msg.getDiagnosticId());
+        assertEquals(diagnosticCreationTimeUtc,msg.getDiagnosticCreationTimeUtc());
         assertNull(msg.getTo());
         assertNull(msg.getUserId());
         assertNull(msg.getDeliveryAcknowledgement());

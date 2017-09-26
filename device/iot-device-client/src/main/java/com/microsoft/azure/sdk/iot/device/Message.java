@@ -128,6 +128,12 @@ public class Message
     private ByteArrayInputStream bodyStream;
     private CustomLogger logger;
 
+
+
+    // zhiqing
+    private String diagnosticId;
+    private String diagnosticCreationTimeUtc;
+
     // ----- Constructors -----
 
     /**
@@ -299,6 +305,8 @@ public class Message
         this.ack = FeedbackStatusCodeEnum.none;
         this.properties = new ArrayList<>();
         this.logger = new CustomLogger(this.getClass());
+        this.diagnosticId = null;
+        this.diagnosticCreationTimeUtc = null;
     }
 
     /**
@@ -449,5 +457,22 @@ public class Message
     {
         // Codes_SRS_MESSAGE_34_037: [The function shall return the message's user ID.]
         return this.userId;
+    }
+
+    // zhiqing
+    public String getDiagnosticCreationTimeUtc() {
+        return this.diagnosticCreationTimeUtc;
+    }
+
+    public void setDiagnosticCreationTimeUtc(String diagnosticCreationTimeUtc) {
+        this.diagnosticCreationTimeUtc = diagnosticCreationTimeUtc;
+    }
+
+    public String getDiagnosticId() {
+        return this.diagnosticId;
+    }
+
+    public void setDiagnosticId(String diagnosticId) {
+        this.diagnosticId = diagnosticId;
     }
 }

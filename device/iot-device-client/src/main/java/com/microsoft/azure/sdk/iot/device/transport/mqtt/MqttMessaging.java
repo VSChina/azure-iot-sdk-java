@@ -7,6 +7,7 @@ import com.microsoft.azure.sdk.iot.device.Message;
 import com.microsoft.azure.sdk.iot.device.MessageProperty;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 
 public class MqttMessaging extends Mqtt
 {
@@ -128,6 +129,25 @@ public class MqttMessaging extends Mqtt
                 stringBuilder.append(message.getTo());
 
                 separatorNeeded = true;
+            }
+
+            if(message.getDiagnosticId() != null && message.getDiagnosticCreationTimeUtc() != null)
+            {
+                if (separatorNeeded)
+                {
+                    stringBuilder.append(MESSAGE_PROPERTY_SEPARATOR);
+                }
+
+                stringBuilder.append(DIAGNOSTIC_ID);
+                stringBuilder.append(MESSAGE_PROPERTY_KEY_VALUE_SEPARATOR);
+                stringBuilder.append(message.getDiagnosticId());
+
+                separatorNeeded = true;
+
+                stringBuilder.append(MESSAGE_PROPERTY_SEPARATOR);
+                stringBuilder.append(DIAGNOSTIC_CONTEXT);
+                stringBuilder.append(MESSAGE_PROPERTY_KEY_VALUE_SEPARATOR);
+                stringBuilder.append(URLEncoder.encode(DIAGNOSTIC_CONTEXT_CREATION_TIME_UTC_PROPERTY + MESSAGE_PROPERTY_KEY_VALUE_SEPARATOR +message.getDiagnosticCreationTimeUtc()));
             }
 
             for(MessageProperty property : message.getProperties())

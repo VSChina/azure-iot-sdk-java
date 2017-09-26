@@ -16,6 +16,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+
 /**
  * Created by zhqqi on 9/22/2017.
  */
@@ -75,7 +78,7 @@ public class DeviceClientDiagnosticTest {
     public void addDiagnosticInfoIfNecessaryWillNotAddDiagnosticInfoIfPercentageIsZero(@Mocked final Message mockMessage)
     {
         // arrange
-        DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
+        final DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
         diagnostic.setDiagSamplingPercentage(0);
 
         // act
@@ -89,6 +92,7 @@ public class DeviceClientDiagnosticTest {
                 times = 0;
                 mockMessage.setDiagnosticCreationTimeUtc((String) any);
                 times = 0;
+                assertEquals(0, Deencapsulation.getField(diagnostic,"currentMessageNumber"));
             }
         };
     }

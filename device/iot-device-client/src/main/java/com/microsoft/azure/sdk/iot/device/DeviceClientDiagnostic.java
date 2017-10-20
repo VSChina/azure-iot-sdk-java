@@ -10,7 +10,6 @@ public class DeviceClientDiagnostic {
     private int diagSamplingPercentage;
     private int currentMessageNumber;
 
-    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private static final int DIAGNOSTIC_ID_CHARACTER_BASE = 62;
 
     public DeviceClientDiagnostic()
@@ -51,7 +50,7 @@ public class DeviceClientDiagnostic {
     {
         // Codes_SRS_DEVICECLIENTDIAGNOSTIC_01_005: [This function shall generate 8 random chars, each is from 0-9a-z.]
         StringBuilder result = new StringBuilder();
-        for(int i=0;i<8;i++) {
+        for (int i = 0; i < 8; i++) {
             int randomNum = ThreadLocalRandom.current().nextInt(0, DIAGNOSTIC_ID_CHARACTER_BASE);
             result.append(getDiagnosticIdChar(randomNum));
         }
@@ -61,7 +60,7 @@ public class DeviceClientDiagnostic {
     private String getCurrentTimeUtc()
     {
         // Codes_SRS_DEVICECLIENTDIAGNOSTIC_01_006: [This function shall return the current timestamp in 0000000000.000 pattern.]
-        DecimalFormat decimalFormat = new DecimalFormat("0000000000.000");
+        DecimalFormat decimalFormat = new DecimalFormat("##########.000");
         return decimalFormat.format(System.currentTimeMillis() / 1000.0);
     }
 
@@ -69,8 +68,8 @@ public class DeviceClientDiagnostic {
     {
         boolean result = false;
         // Codes_SRS_DEVICECLIENTDIAGNOSTIC_01_007: [This function shall return false if sampling percentage is set to 0.]
-        if(diagSamplingPercentage > 0) {
-            if(currentMessageNumber == Integer.MAX_VALUE) {
+        if (diagSamplingPercentage > 0) {
+            if (currentMessageNumber == Integer.MAX_VALUE) {
                 currentMessageNumber = 0;
             }
             currentMessageNumber++;
@@ -82,8 +81,8 @@ public class DeviceClientDiagnostic {
 
     public void addDiagnosticInfoIfNecessary(Message message)
     {
-        if(shouldAddDiagnosticInfo()) {
-            DiagnosticPropertyData diagnosticPropertyData = new DiagnosticPropertyData(generateEightRandomCharacters(),getCurrentTimeUtc());
+        if (shouldAddDiagnosticInfo()) {
+            DiagnosticPropertyData diagnosticPropertyData = new DiagnosticPropertyData(generateEightRandomCharacters(), getCurrentTimeUtc());
             message.setDiagnosticPropertyData(diagnosticPropertyData);
         }
     }

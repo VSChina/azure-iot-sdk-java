@@ -92,7 +92,7 @@ public class DeviceClientDiagnosticTest {
             {
                 mockMessage.setDiagnosticPropertyData((DiagnosticPropertyData) any);
                 times = 0;
-                assertEquals(0, Deencapsulation.getField(diagnostic,"currentMessageNumber"));
+                assertEquals(0, Deencapsulation.getField(diagnostic, "currentMessageNumber"));
             }
         };
     }

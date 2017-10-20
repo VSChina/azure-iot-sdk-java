@@ -17,8 +17,7 @@ public class DiagnosticPropertyData
 
     public DiagnosticPropertyData(String diagnosticId, String diagnosticCreationTimeUtc) {
         /* Codes_SRS_DIAGNOSTICPROPERTYDATA_01_002: [If the diagnosticId or diagnosticCreationTimeUtc is null, the constructor shall throw an IllegalArgumentException.] */
-        if (diagnosticId == null || diagnosticId.isEmpty() || diagnosticCreationTimeUtc == null || diagnosticCreationTimeUtc.isEmpty())
-        {
+        if (diagnosticId == null || diagnosticId.isEmpty() || diagnosticCreationTimeUtc == null || diagnosticCreationTimeUtc.isEmpty()) {
             throw new IllegalArgumentException("The diagnosticId or diagnosticCreationTimeUtc cannot be null or empty.");
         }
 
@@ -33,8 +32,7 @@ public class DiagnosticPropertyData
 
     public void setDiagnosticId(String diagnosticId) {
         /* Codes_SRS_DIAGNOSTICPROPERTYDATA_02_001: [A valid diagnosticId shall not be null or empty.] */
-        if (diagnosticId == null || diagnosticId.isEmpty())
-        {
+        if (diagnosticId == null || diagnosticId.isEmpty()) {
             throw new IllegalArgumentException("The diagnosticId cannot be null or empty.");
         }
         this.diagnosticId = diagnosticId;
@@ -46,8 +44,7 @@ public class DiagnosticPropertyData
 
     public void setDiagnosticCreationTimeUtc(String diagnosticCreationTimeUtc) {
         /* Codes_SRS_DIAGNOSTICPROPERTYDATA_02_002: [A valid diagnosticCreationTimeUtc shall not be null or empty.] */
-        if (diagnosticCreationTimeUtc == null || diagnosticCreationTimeUtc.isEmpty())
-        {
+        if (diagnosticCreationTimeUtc == null || diagnosticCreationTimeUtc.isEmpty()) {
             throw new IllegalArgumentException("The diagnosticCreationTimeUtc cannot be null or empty.");
         }
         this.diagnosticCreationTimeUtc = diagnosticCreationTimeUtc;

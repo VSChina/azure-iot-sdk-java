@@ -245,12 +245,11 @@ public final class AmqpsDeviceTelemetry extends AmqpsDeviceOperations
             outgoingMessage.setApplicationProperties(applicationProperties);
         }
 
-        if(message.getDiagnosticPropertyData() != null)
-        {
+        if (message.getDiagnosticPropertyData() != null) {
             // Codes_SRS_AMQPSDEVICETELEMETRY_13_001: [The function shall add diagnostic information as AMQP message annotation.]
-            Map<Symbol,Object> annotationMap = new HashMap<>();
-            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_ID_KEY),message.getDiagnosticPropertyData().getDiagnosticId());
-            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_CONTEXT_KEY),message.getDiagnosticPropertyData().getCorrelationContext());
+            Map<Symbol, Object> annotationMap = new HashMap<>();
+            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_ID_KEY), message.getDiagnosticPropertyData().getDiagnosticId());
+            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_CONTEXT_KEY), message.getDiagnosticPropertyData().getCorrelationContext());
             outgoingMessage.setMessageAnnotations(new MessageAnnotations(annotationMap));
         }
 

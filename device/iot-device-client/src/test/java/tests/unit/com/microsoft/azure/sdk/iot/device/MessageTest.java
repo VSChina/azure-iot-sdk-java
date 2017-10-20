@@ -310,7 +310,7 @@ public class MessageTest
         String correlationId = "6789";
         String diagnosticId = "diag";
         String diagnosticCreationTimeUtc = "0000000000.000";
-        DiagnosticPropertyData diagnosticPropertyData = new DiagnosticPropertyData(diagnosticId,diagnosticCreationTimeUtc);
+        DiagnosticPropertyData diagnosticPropertyData = new DiagnosticPropertyData(diagnosticId, diagnosticCreationTimeUtc);
 
         //act
         msg.setMessageType(type);

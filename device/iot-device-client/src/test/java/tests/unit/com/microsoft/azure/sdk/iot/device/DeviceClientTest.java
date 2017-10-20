@@ -1815,7 +1815,7 @@ public class DeviceClientTest
         final Integer value = 30;
 
         // act
-        client.setOption("SetDiagnosticSamplingPercentage",value);
+        client.setOption("SetDiagnosticSamplingPercentage", value);
 
         // assert
         new Verifications()
@@ -1840,7 +1840,7 @@ public class DeviceClientTest
         DeviceClient client = new DeviceClient(connString, protocol);
 
         // act
-        client.setOption("SetDiagnosticSamplingPercentage","101");
+        client.setOption("SetDiagnosticSamplingPercentage", "101");
     }
 
     /* Tests_SRS_DEVICECLIENT_26_004: [Set SetDiagnosticSamplingPercentage with null value will throw IllegalArgumentException.] */
@@ -1856,7 +1856,7 @@ public class DeviceClientTest
         DeviceClient client = new DeviceClient(connString, protocol);
 
         // act
-        client.setOption("SetDiagnosticSamplingPercentage",null);
+        client.setOption("SetDiagnosticSamplingPercentage", null);
     }
 
     /* Tests_SRS_DEVICECLIENT_26_005: [Set SetDiagnosticSamplingPercentage with value out of range [0,100] will throw IllegalArgumentException.] */
@@ -1872,7 +1872,7 @@ public class DeviceClientTest
         DeviceClient client = new DeviceClient(connString, protocol);
 
         // act
-        client.setOption("SetDiagnosticSamplingPercentage",101);
+        client.setOption("SetDiagnosticSamplingPercentage", 101);
     }
 
     //Tests_SRS_DEVICECLIENT_34_046: [If The provided connection string contains an expired SAS token, throw a SecurityException.]

@@ -11,7 +11,7 @@ public class DeviceClientDiagnostic {
     private int currentMessageNumber;
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-    private static final int BASE_36 = 36;
+    private static final int DIAGNOSTIC_ID_CHARACTER_BASE = 62;
 
     public DeviceClientDiagnostic()
     {
@@ -35,10 +35,16 @@ public class DeviceClientDiagnostic {
         this.currentMessageNumber = 0;
     }
 
-    // Get a character from 0-9a-z
-    private char getBase36Char(int value)
+    // Get a character from 0-9a-zA-Z
+    private char getDiagnosticIdChar(int value)
     {
-        return value <= 9 ? (char)('0' + value) : (char) ('a' + value - 10);
+        if (value <= 9) {
+            return (char) ('0' + value);
+        } else if (value <= 9 + 26) {
+            return (char) ('A' + value - 10);
+        } else {
+            return (char) ('a' + value - 36);
+        }
     }
 
     private String generateEightRandomCharacters()
@@ -46,8 +52,8 @@ public class DeviceClientDiagnostic {
         // Codes_SRS_DEVICECLIENTDIAGNOSTIC_01_005: [This function shall generate 8 random chars, each is from 0-9a-z.]
         StringBuilder result = new StringBuilder();
         for(int i=0;i<8;i++) {
-            int randomNum = ThreadLocalRandom.current().nextInt(0, BASE_36 );
-            result.append(getBase36Char(randomNum));
+            int randomNum = ThreadLocalRandom.current().nextInt(0, DIAGNOSTIC_ID_CHARACTER_BASE);
+            result.append(getDiagnosticIdChar(randomNum));
         }
         return result.toString();
     }

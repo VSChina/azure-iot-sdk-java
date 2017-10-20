@@ -68,7 +68,7 @@ public class DeviceClientDiagnostic {
     {
         boolean result = false;
         // Codes_SRS_DEVICECLIENTDIAGNOSTIC_01_007: [This function shall return false if sampling percentage is set to 0.]
-        if (diagSamplingPercentage > 0) {
+        if (diagSamplingPercentage > 0 && diagSamplingPercentage <= 100) {
             if (currentMessageNumber == Integer.MAX_VALUE) {
                 currentMessageNumber = 0;
             }

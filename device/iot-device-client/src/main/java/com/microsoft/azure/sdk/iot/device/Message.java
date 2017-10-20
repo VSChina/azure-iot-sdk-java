@@ -470,6 +470,10 @@ public class Message
      */
     public void setDiagnosticPropertyData(DiagnosticPropertyData diagnosticPropertyData) {
         // Codes_SRS_MESSAGE_35_002: [The function shall set the message's diagnostic property data.]
+        if (diagnosticPropertyData == null)
+        {
+            throw new IllegalArgumentException("diagnosticPropertyData cannot be 'null'.");
+        }
         this.diagnosticPropertyData = diagnosticPropertyData;
     }
 }

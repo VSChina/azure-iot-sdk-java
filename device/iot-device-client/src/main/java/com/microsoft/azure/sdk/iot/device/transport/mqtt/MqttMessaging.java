@@ -114,22 +114,22 @@ public class MqttMessaging extends Mqtt
             separatorNeeded = true;
         }
 
-        if (message.getDiagnosticPropertyData() != null) {
-            // Codes_SRS_MQTTMESSAGING_26_001: [The function shall add diagnostic information as MQTT system properties.]
+        if (message.getDiagnosticId() != null && message.getDiagnosticCorrelationContext() != null) {
+            // Codes_SRS_MqttMessaging_26_001: [The function shall add diagnostic information as MQTT system properties.]
             if (separatorNeeded) {
                 stringBuilder.append(MESSAGE_PROPERTY_SEPARATOR);
             }
 
             stringBuilder.append(DIAGNOSTIC_ID);
             stringBuilder.append(MESSAGE_PROPERTY_KEY_VALUE_SEPARATOR);
-            stringBuilder.append(message.getDiagnosticPropertyData().getDiagnosticId());
+            stringBuilder.append(message.getDiagnosticId());
 
             separatorNeeded = true;
 
             stringBuilder.append(MESSAGE_PROPERTY_SEPARATOR);
             stringBuilder.append(DIAGNOSTIC_CONTEXT);
             stringBuilder.append(MESSAGE_PROPERTY_KEY_VALUE_SEPARATOR);
-            stringBuilder.append(URLEncoder.encode(message.getDiagnosticPropertyData().getCorrelationContext(), "UTF-8"));
+            stringBuilder.append(URLEncoder.encode(message.getDiagnosticCorrelationContext(), "UTF-8"));
         }
 
         for(MessageProperty property : message.getProperties())

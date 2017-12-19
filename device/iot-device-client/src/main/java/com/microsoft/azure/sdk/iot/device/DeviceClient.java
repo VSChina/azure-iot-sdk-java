@@ -13,6 +13,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,7 +101,6 @@ public final class DeviceClient implements Closeable
     private static final String SET_SEND_INTERVAL = "SetSendInterval";
     private static final String SET_CERTIFICATE_PATH = "SetCertificatePath";
     private static final String SET_SAS_TOKEN_EXPIRY_TIME = "SetSASTokenExpiryTime";
-    private static final String SET_DIAGNOSTIC_SAMPLING_PERCENTAGE = "SetDiagnosticSamplingPercentage";
 
     private DeviceClientConfig config;
     private DeviceIO deviceIO;
@@ -329,9 +329,6 @@ public final class DeviceClient implements Closeable
         this.transportClient = null;
         this.deviceIO = new DeviceIO(this.config, protocol, SEND_PERIOD_MILLIS, RECEIVE_PERIOD_MILLIS);
 
-        /* Codes_SRS_DEVICECLIENT_26_001: [The constructor shall initialize device client diagnostic] */
-        this.deviceDiagnostic = new DeviceClientDiagnostic();
-
         this.logger = new CustomLogger(this.getClass());
         logger.LogInfo("DeviceClient object is created successfully, method name is %s ", logger.getMethodName());
     }
@@ -469,7 +466,10 @@ public final class DeviceClient implements Closeable
      */
     public void sendEventAsync(Message message, IotHubEventCallback callback, Object callbackContext)
     {
-        deviceDiagnostic.addDiagnosticInfoIfNecessary(message);
+        /* Codes_SRS_DEVICECLIENT_26_001: [The sendEventAsync shall attach diagnostic information on the message if necessary.] */
+        if (deviceDiagnostic != null) {
+            deviceDiagnostic.addDiagnosticInfoIfNecessary(message);
+        }
         /* Codes_SRS_DEVICECLIENT_21_010: [The sendEventAsync shall asynchronously send the message using the deviceIO connection.] */
         /* Codes_SRS_DEVICECLIENT_21_011: [If starting to send via deviceIO is not successful, the sendEventAsync shall bypass the threw exception.] */
         /* Codes_SRS_DEVICECLIENT_12_001: [The function shall call deviceIO.sendEventAsync with the client's config parameter to enable multiplexing.] */
@@ -523,6 +523,10 @@ public final class DeviceClient implements Closeable
                                 PropertyCallBack genericPropertyCallBack, Object genericPropertyCallBackContext)
             throws IOException
     {
+        if (this.deviceDiagnostic != null && this.deviceDiagnostic.getDiagnosticTwin() != null) {
+            /* Codes_SRS_DEVICECLIENT_26_002: [If enableDiagnostics is already called, the function shall throw an UnsupportedOperationException.] */
+            throw new UnsupportedOperationException("You should call enableDiagnostic after startDeviceTwin");
+        }
         if (!this.deviceIO.isOpen())
         {
             /*
@@ -894,21 +898,6 @@ public final class DeviceClient implements Closeable
         }
     }
 
-    private void setOption_SetDiagnosticSamplingPercentage(Object value) {
-        logger.LogInfo("Setting DiagnosticSamplingPercentage as %s %%, method name is %s ", value, logger.getMethodName());
-
-        if (value != null) {
-            // Codes_SRS_DEVICECLIENT_26_002: ["SetDiagnosticSamplingPercentage" needs to have type int].
-            if (value instanceof Integer) {
-                this.deviceDiagnostic.setDiagSamplingPercentage((Integer)value);
-            } else {
-                throw new IllegalArgumentException("value is not integer = " + value);
-            }
-        } else {
-            throw new IllegalArgumentException("value cannot be null");
-        }
-    }
-
     /**
      * Sets a runtime option identified by parameter {@code optionName}
      * to {@code value}.
@@ -1063,12 +1052,6 @@ public final class DeviceClient implements Closeable
                     }
                     break;
                 }
-                // Codes_SRS_DEVICECLIENT_26_003: ["SetDiagnosticSamplingPercentage" - Percentage to specify diagnostic sampling rate.]
-                case SET_DIAGNOSTIC_SAMPLING_PERCENTAGE:
-                {
-                    setOption_SetDiagnosticSamplingPercentage(value);
-                    break;
-                }
                 default:
                 {
                     throw new IllegalArgumentException("optionName is unknown = " + optionName);
@@ -1141,5 +1124,57 @@ public final class DeviceClient implements Closeable
     {
         // Codes_SRS_DEVICECLIENT_12_004: [The function shall set the client's underlying DeviceIO to the value of the given deviceIO parameter.]
         this.deviceIO = deviceIO;
+    }
+
+    /**
+     * Enable end to end diagnostics with cloud settings.(Will fetch from device twin)
+     *
+     * @throws IOException                   if device client is not open
+     * @throws UnsupportedOperationException if called more than once
+     */
+    public void enableDiagnostics() throws IOException {
+        if (!this.deviceIO.isOpen()) {
+            /* Codes_SRS_DEVICECLIENT_26_003: [If the client has not been open, the function shall throw an IOException.] */
+            throw new IOException("Open the client connection before using enableDiagnostics.");
+        }
+        if (this.deviceDiagnostic != null) {
+            /* Codes_SRS_DEVICECLIENT_26_004: [If enableDiagnostics function is called more than once, the function shall throw an UnsupportedOperationException.] */
+            throw new UnsupportedOperationException("enableDiagnostics can only be called once");
+        }
+        if (this.deviceTwin == null) {
+            /* Codes_SRS_DEVICECLIENT_26_005: [If user did not initialize twin, the function shall start a twin with empty event and property callback.] */
+            IotHubEventCallback emptyEventCallback = new IotHubEventCallback() {
+                public void execute(IotHubStatusCode status, Object context) {
+                }
+            };
+            PropertyCallBack emptyPropertyCallback = new Device() {
+                @Override
+                public void PropertyCall(String propertyKey, Object propertyValue, Object context) {
+                }
+            };
+            this.deviceTwin = new DeviceTwin(this.deviceIO, this.config, emptyEventCallback, null,
+                    emptyPropertyCallback, null);
+            this.deviceTwin.getDeviceTwin();
+        }
+        /* Codes_SRS_DEVICECLIENT_26_006: [The function shall subscribe to diagnostic desired properties.] */
+        this.deviceDiagnostic = new DeviceClientDiagnostic(this.deviceTwin);
+        HashMap<Property, Pair<PropertyCallBack<String, Object>, Object>> diagnosticDesiredProperties = new HashMap<>();
+        diagnosticDesiredProperties.put(new Property(DeviceClientDiagnostic.DIAGNOSTIC_TWIN_KEY_DIAG_SAMPLE_RATE, null), new Pair<>(deviceDiagnostic.twinPropertyCallback, (Object) null));
+        this.subscribeToDesiredProperties(diagnosticDesiredProperties);
+    }
+
+    /**
+     * Enable end to end diagnostics with local settings.
+     *
+     * @param samplingPercentage The local setting for diagnostic sampling percentage
+     * @throws UnsupportedOperationException if called more than once
+     */
+    public void enableDiagnostics(int samplingPercentage) {
+        if (deviceDiagnostic != null) {
+            /* Codes_SRS_DEVICECLIENT_26_004: [If enableDiagnostics function is called more than once, the function shall throw an UnsupportedOperationException.] */
+            throw new UnsupportedOperationException("enableDiagnostics can only be called once");
+        }
+        deviceDiagnostic = new DeviceClientDiagnostic();
+        deviceDiagnostic.setDiagSamplingPercentage(samplingPercentage);
     }
 }

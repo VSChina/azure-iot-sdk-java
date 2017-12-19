@@ -18,7 +18,7 @@ The following table describes the names and format of diagnostic related propert
 | System Property Name | MQTT Property Name | Property Purpose                          | Property Value Format                                    | Property Value Sample                        |
 |----------------------|--------------------|-------------------------------------------|----------------------------------------------------------|----------------------------------------------|
 | diag-id              | $.diagid           | Track the message in consequent flow      | 8 characters, [a-z0-9]8                                  | "8cd869z4"                                   |
-| Correlation-Context  | $.cctx             | Context contains multiple key-value pairs | Comma separated list of key-value, it is RFC2396 encoded | “creationtimeutc=2017-02-22T01:01:01Z,hop=2” |
+| Correlation-Context  | $.diagctx             | Context contains multiple key-value pairs | Comma separated list of key-value, it is RFC2396 encoded | “creationtimeutc=2017-02-22T01:01:01Z,hop=2” |
 
 | ﻿Property Name in Correlation-Context                                               | Property Purpose                                        | Property Value Format | Property Value Sample      |  
 |------------------------------------------------------------------------------------|---------------------------------------------------------|-----------------------|----------------------------|

@@ -35,6 +35,9 @@ public final class DeviceClient
             throws IllegalArgumentException, IllegalStateException, IOException;
     
     public void registerConnectionStateCallback(IotHubConnectionStateCallback callback, Object callbackContext);
+    
+    public void enableDiagnostics();
+    public void enableDiagnostics(int samplingPercentage);
 }
 ```
 
@@ -184,6 +187,7 @@ public void closeNow();
 ```java
 public void sendEventAsync(Message msg, IotHubEventCallback callback, Object callbackContext);
 ```
+**SRS_DEVICECLIENT_26_001: [**The sendEventAsync shall attach diagnostic information on the message if necessary.**]**  
 
 **SRS_DEVICECLIENT_21_010: [**The sendEventAsync shall asynchronously send the message using the deviceIO connection.**]**  
 
@@ -264,6 +268,8 @@ Options handled by the client:
 ```java
 public void startDeviceTwin(IotHubEventCallback deviceTwinStatusCallback, Object    deviceTwinStatusCallbackContext, PropertyCallBack genericPropertyCallBack, Object genericPropertyCallBackContext) throws IOException;
 ```
+
+**SRS_DEVICECLIENT_26_002: [**If enableDiagnostics is already called, the function shall throw an UnsupportedOperationException.**]**
 
 **SRS_DEVICECLIENT_25_025: [**The function shall create a new instance of class Device Twin and request all twin properties by calling getDeviceTwin**]**
 
@@ -392,3 +398,19 @@ void setDeviceIO(DeviceIO deviceIO)
 ```
 
 **SRS_DEVICECLIENT_12_004: [**The function shall set the client's underlying DeviceIO to the value of the given deviceIO parameter.**]**
+
+
+### enableDiagnostics
+```java
+public void enableDiagnostics();
+```
+
+**SRS_DEVICECLIENT_26_003: [**If the client has not been open, the function shall throw an IOException.**]**
+**SRS_DEVICECLIENT_26_004: [**If enableDiagnostics function is called more than once, the function shall throw an UnsupportedOperationException.**]**
+**SRS_DEVICECLIENT_26_005: [**If user did not initialize twin, the function shall start a twin with empty event and property callback.**]**
+**SRS_DEVICECLIENT_26_006: [**The function shall subscribe to diagnostic desired properties.**]**
+
+```java
+public void enableDiagnostics(int samplingPercentage);
+```
+

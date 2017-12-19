@@ -1,6 +1,8 @@
 package tests.unit.com.microsoft.azure.sdk.iot.device;
 
 import com.microsoft.azure.sdk.iot.device.*;
+import com.microsoft.azure.sdk.iot.device.DeviceTwin.Device;
+import com.microsoft.azure.sdk.iot.device.DeviceTwin.DeviceTwin;
 import mockit.Deencapsulation;
 import mockit.Mocked;
 import mockit.Verifications;
@@ -22,9 +24,8 @@ public class DeviceClientDiagnosticTest {
     DeviceIO mockDeviceIO;
 
     // Tests_SRS_DEVICECLIENTDIAGNOSTIC_01_001 [If parameter of setDiagSamplingPercentage is negative, throw IllegalArgumentException.]
-    @Test (expected = IllegalArgumentException.class)
-    public void setDiagSamplingPercentageNegativeValueThrows()
-    {
+    @Test(expected = IllegalArgumentException.class)
+    public void setDiagSamplingPercentageNegativeValueThrows() {
         // arrange
         DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
 
@@ -33,9 +34,8 @@ public class DeviceClientDiagnosticTest {
     }
 
     // Tests_SRS_DEVICECLIENTDIAGNOSTIC_01_002 [If parameter of setDiagSamplingPercentage is larger than 100, throw IllegalArgumentException.]
-    @Test (expected = IllegalArgumentException.class)
-    public void setDiagSamplingPercentageIllegalValueThrows()
-    {
+    @Test(expected = IllegalArgumentException.class)
+    public void setDiagSamplingPercentageIllegalValueThrows() {
         // arrange
         DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
 
@@ -45,8 +45,7 @@ public class DeviceClientDiagnosticTest {
 
     // Tests_SRS_DEVICECLIENTDIAGNOSTIC_01_003 [The function shall add diagnostic property data to message if sampling percentage is set to 100.]
     @Test
-    public void addDiagnosticInfoIfNecessaryWillAddDiagnosticInfo(@Mocked final Message mockMessage)
-    {
+    public void addDiagnosticInfoIfNecessaryWillAddDiagnosticInfo(@Mocked final Message mockMessage) {
         // arrange
         DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
         diagnostic.setDiagSamplingPercentage(100);
@@ -55,10 +54,11 @@ public class DeviceClientDiagnosticTest {
         diagnostic.addDiagnosticInfoIfNecessary(mockMessage);
 
         // assert
-        new Verifications()
-        {
+        new Verifications() {
             {
-                mockMessage.setDiagnosticPropertyData((DiagnosticPropertyData) any);
+                mockMessage.setDiagnosticId(anyString);
+                times = 1;
+                mockMessage.setDiagnosticCorrelationContext(anyString);
                 times = 1;
             }
         };
@@ -66,8 +66,7 @@ public class DeviceClientDiagnosticTest {
 
     // Tests_SRS_DEVICECLIENTDIAGNOSTIC_01_004 [The function shall not add diagnostic property data to message and increment message number if sampling percentage is set to 0.]
     @Test
-    public void addDiagnosticInfoIfNecessaryWillNotAddDiagnosticInfoIfPercentageIsZero(@Mocked final Message mockMessage)
-    {
+    public void addDiagnosticInfoIfNecessaryWillNotAddDiagnosticInfoIfPercentageIsZero(@Mocked final Message mockMessage) {
         // arrange
         final DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
         diagnostic.setDiagSamplingPercentage(0);
@@ -76,10 +75,11 @@ public class DeviceClientDiagnosticTest {
         diagnostic.addDiagnosticInfoIfNecessary(mockMessage);
 
         // assert
-        new Verifications()
-        {
+        new Verifications() {
             {
-                mockMessage.setDiagnosticPropertyData((DiagnosticPropertyData) any);
+                mockMessage.setDiagnosticId(anyString);
+                times = 0;
+                mockMessage.setDiagnosticCorrelationContext(anyString);
                 times = 0;
                 assertEquals(0, Deencapsulation.getField(diagnostic, "currentMessageNumber"));
             }
@@ -88,8 +88,7 @@ public class DeviceClientDiagnosticTest {
 
     // Tests_SRS_DEVICECLIENTDIAGNOSTIC_01_005 [The function shall add diagnostic property data to message correspond to the sampling percentage.]
     @Test
-    public void addDiagnosticInfoIfNecessaryWillAddDiagnosticInfoApplyToPercentage(@Mocked final Message mockMessage)
-    {
+    public void addDiagnosticInfoIfNecessaryWillAddDiagnosticInfoApplyToPercentage(@Mocked final Message mockMessage) {
         // arrange
         DeviceClientDiagnostic diagnostic = new DeviceClientDiagnostic();
         diagnostic.setDiagSamplingPercentage(80);
@@ -101,7 +100,9 @@ public class DeviceClientDiagnosticTest {
         // assert
         new Verifications() {
             {
-                mockMessage.setDiagnosticPropertyData((DiagnosticPropertyData) any);
+                mockMessage.setDiagnosticId(anyString);
+                times = 8;
+                mockMessage.setDiagnosticCorrelationContext(anyString);
                 times = 8;
             }
         };

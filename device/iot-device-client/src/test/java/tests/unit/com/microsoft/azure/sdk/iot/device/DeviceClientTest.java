@@ -683,7 +683,7 @@ public class DeviceClientTest
         final Map<String, Object> context = new HashMap<>();
         DeviceClient client = new DeviceClient(connString, protocol);
         client.open();
-        client.setOption("SetDiagnosticSamplingPercentage",100);
+        client.enableDiagnostics(100);
         // act
         client.sendEventAsync(mockMessage, mockCallback, context);
 
@@ -2567,31 +2567,6 @@ public class DeviceClientTest
         client.setOption("SetMinimumPollingInterval", "thisIsNotALong");
     }
 
-    /* Tests_SRS_DEVICECLIENT_26_002: [setDiagSamplingPercentage will be called when option SetDiagnosticSamplingPercentage is set.] */
-    @Test
-    public void setOptionDiagnosticSamplingPercentageSucceeds(@Mocked final DeviceClientDiagnostic mockDeviceDiagnostic)
-            throws URISyntaxException
-    {
-        // arrange
-        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
-                + "SharedAccessKey=adjkl234j52=";
-        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
-        DeviceClient client = new DeviceClient(connString, protocol);
-        final Integer value = 30;
-
-        // act
-        client.setOption("SetDiagnosticSamplingPercentage", value);
-
-        // assert
-        new Verifications()
-        {
-            {
-                mockDeviceDiagnostic.setDiagSamplingPercentage(value);
-                times = 1;
-            }
-        };
-    }
-
     /* Tests_SRS_DEVICECLIENT_26_003: [Set SetDiagnosticSamplingPercentage with non-int value will throw IllegalArgumentException.] */
     @Test(expected = IllegalArgumentException.class)
     public void setOptionDiagnosticSamplingPercentageWithStringInsteadOfIntegerFails()
@@ -3210,5 +3185,84 @@ public class DeviceClientTest
         // assert
         assertNull(Deencapsulation.getField(client, "config"));
         assertNull(Deencapsulation.getField(client, "deviceIO"));
+    }
+
+    /* Tests_SRS_DEVICECLIENT_26_002: [setDiagSamplingPercentage will be called when enableDiagnostic is called with paramteres=.] */
+    @Test
+    public void enableDiagnosticSetSamplingPercentage(@Mocked final DeviceClientDiagnostic mockDeviceDiagnostic)
+            throws URISyntaxException {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        DeviceClient client = new DeviceClient(connString, protocol);
+        final Integer value = 30;
+
+        // act
+        client.enableDiagnostics(value);
+
+        // assert
+        new Verifications() {
+            {
+                mockDeviceDiagnostic.setDiagSamplingPercentage(value);
+                times = 1;
+            }
+        };
+    }
+
+    /* Tests_SRS_DEVICECLIENT_26_003: [enableDiagnostic will throw IOException if not called open] */
+    @Test(expected = IOException.class)
+    public void enableDiagnosticNotOpenThrows(@Mocked final DeviceClientDiagnostic mockDeviceDiagnostic)
+            throws URISyntaxException, IOException {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        DeviceClient client = new DeviceClient(connString, protocol);
+
+        // act
+        client.enableDiagnostics();
+    }
+
+    /* Tests_SRS_DEVICECLIENT_26_004: [enableDiagnostic will throw UnsupportedOperationException if called more than once] */
+    @Test(expected = UnsupportedOperationException.class)
+    public void enableDiagnosticMultipleTimesThrows(@Mocked final DeviceClientDiagnostic mockDeviceDiagnostic)
+            throws URISyntaxException, IOException {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        DeviceClient client = new DeviceClient(connString, protocol);
+        client.open();
+        new NonStrictExpectations() {
+            {
+                mockDeviceIO.isOpen();
+                result = true;
+            }
+        };
+        // act
+        client.enableDiagnostics();
+        client.enableDiagnostics();
+    }
+
+    /* Tests_SRS_DEVICECLIENT_26_005: [startDeviceTwin will throw UnsupportedOperationException if called after enableDiagnostics] */
+    @Test(expected = UnsupportedOperationException.class)
+    public void callStartDeviceTwinAfterEnableDiagnosticsThrows(@Mocked IotHubEventCallback mockEventCallback, @Mocked PropertyCallBack mockPropertyCallback)
+            throws URISyntaxException, IOException {
+        // arrange
+        final String connString = "HostName=iothub.device.com;CredentialType=SharedAccessKey;DeviceId=testdevice;"
+                + "SharedAccessKey=adjkl234j52=";
+        final IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        DeviceClient client = new DeviceClient(connString, protocol);
+        client.open();
+        new NonStrictExpectations() {
+            {
+                mockDeviceIO.isOpen();
+                result = true;
+            }
+        };
+        // act
+        client.enableDiagnostics();
+        client.startDeviceTwin(mockEventCallback, null, mockPropertyCallback, null);
     }
 }

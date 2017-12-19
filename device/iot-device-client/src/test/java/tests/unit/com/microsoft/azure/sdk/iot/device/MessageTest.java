@@ -3,8 +3,6 @@
 
 package tests.unit.com.microsoft.azure.sdk.iot.device;
 
-import com.microsoft.azure.sdk.iot.device.DiagnosticPropertyData;
-import com.microsoft.azure.sdk.iot.device.IotHubConnectionString;
 import com.microsoft.azure.sdk.iot.device.Message;
 import com.microsoft.azure.sdk.iot.device.MessageProperty;
 import com.microsoft.azure.sdk.iot.device.MessageType;
@@ -314,8 +312,6 @@ public class MessageTest
         String messageId = "1234";
         String correlationId = "6789";
         String diagnosticId = "diag";
-        String diagnosticCreationTimeUtc = "0000000000.000";
-        DiagnosticPropertyData diagnosticPropertyData = new DiagnosticPropertyData(diagnosticId, diagnosticCreationTimeUtc);
         final String iotHubHostname = "test.iothubhostname";
         final String deviceId = "test-deviceid";
         final String deviceKey = "test-devicekey";
@@ -327,21 +323,24 @@ public class MessageTest
                         deviceId,
                         deviceKey,
                         sharedAccessToken);
+        String diagnosticCorrelationContext = "creationtimeutc=0000000000.000";
 
         //act
         msg.setMessageType(type);
         msg.setCorrelationId(correlationId);
         msg.setMessageId(messageId);
-        msg.setDiagnosticPropertyData(diagnosticPropertyData);
         msg.setIotHubConnectionString(iotHubConnectionString);
+        msg.setDiagnosticId(diagnosticId);
+        msg.setDiagnosticCorrelationContext(diagnosticCorrelationContext);
 
         //assert
         assertEquals(type, msg.getMessageType());
         assertEquals(correlationId, msg.getCorrelationId());
         assertEquals(messageId, msg.getMessageId());
-        assertEquals(diagnosticPropertyData,msg.getDiagnosticPropertyData());
         assertEquals(iotHubConnectionString, msg.getIotHubConnectionString());
 
+        assertEquals(diagnosticId, msg.getDiagnosticId());
+        assertEquals(diagnosticCorrelationContext, msg.getDiagnosticCorrelationContext());
         assertNull(msg.getTo());
         assertNull(msg.getUserId());
         assertNull(msg.getDeliveryAcknowledgement());

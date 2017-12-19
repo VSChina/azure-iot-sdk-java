@@ -133,8 +133,12 @@ public class Message
     private ByteArrayInputStream bodyStream;
     private CustomLogger logger;
 
-    // Diagnostic data attached to the message
-    private DiagnosticPropertyData diagnosticPropertyData;
+
+
+    // Id of end to end diagnostics
+    private String diagnosticId;
+    // Correlation context of end to end diagnostics
+    private String diagnosticCorrelationContext;
 
     // ----- Constructors -----
 
@@ -307,7 +311,6 @@ public class Message
         this.ack = FeedbackStatusCodeEnum.none;
         this.properties = new ArrayList<>();
         this.logger = new CustomLogger(this.getClass());
-        this.diagnosticPropertyData = null;
     }
 
     /**
@@ -461,27 +464,39 @@ public class Message
     }
 
     /**
-     * Getter for the diagnostic property data
-     * @return the diagnostic property data
+     * Getter for the diagnostic id
+     * @return the diagnostic id
      */
-    public DiagnosticPropertyData getDiagnosticPropertyData()
-    {
-        // Codes_SRS_MESSAGE_35_001: [The function shall return the message's diagnostic property data.]
-        return diagnosticPropertyData;
+    public String getDiagnosticId() {
+        // Codes_SRS_MESSAGE_35_001: [The function shall return the message's diagnostic id.]
+        return diagnosticId;
     }
 
     /**
-     * Setter for the ediagnostic property data
-     * @param diagnosticPropertyData The diagnostic property data
+     * Setter for the diagnostic id
+     * @param diagnosticId The diagnostic id
      */
-    public void setDiagnosticPropertyData(DiagnosticPropertyData diagnosticPropertyData)
-    {
-        // Codes_SRS_MESSAGE_35_002: [The function shall set the message's diagnostic property data.]
-        if (diagnosticPropertyData == null)
-        {
-            throw new IllegalArgumentException("diagnosticPropertyData cannot be 'null'.");
-        }
-        this.diagnosticPropertyData = diagnosticPropertyData;
+    public void setDiagnosticId(String diagnosticId) {
+        // Codes_SRS_MESSAGE_35_002: [The function shall set the message's diagnostic correlation context.]
+        this.diagnosticId = diagnosticId;
+    }
+
+    /**
+     * Getter for the diagnostic correlation context
+     * @return the diagnostic correlation context
+     */
+    public String getDiagnosticCorrelationContext() {
+        // Codes_SRS_MESSAGE_35_003: [The function shall return the message's diagnostic correlation context.]
+        return diagnosticCorrelationContext;
+    }
+
+    /**
+     * Setter for the diagnostic correlation context
+     * @param diagnosticCorrelationContext The diagnostic correlation context
+     */
+    public void setDiagnosticCorrelationContext(String diagnosticCorrelationContext) {
+        // Codes_SRS_MESSAGE_35_004: [The function shall set the message's diagnostic correlation context.]
+        this.diagnosticCorrelationContext = diagnosticCorrelationContext;
     }
 
     /*

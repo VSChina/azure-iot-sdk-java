@@ -73,4 +73,6 @@ public void stop() throws IOException;
 
 **SRS_MqttMessaging_34_029: [**If the message has a To, this method shall append that To to publishTopic before publishing using the key name `$.to`.**]**
 
+**SRS_MqttMessaging_26_001: [**The function shall add diagnostic information as MQTT system properties.**]**
+
 **SRS_MqttMessaging_34_030: [**If the message has a UserId, this method shall append that userId to publishTopic before publishing using the key name `$.uid`.**]**

@@ -118,4 +118,4 @@ public AmqpsConvertToProtonReturnValue convertToProton(Message message);
 
 **SRS_AMQPSDEVICETELEMETRY_12_019: [**The function shall return with the new AmqpsConvertToProtonReturnValue object.**]**
 
-
+**SRS_AMQPSDEVICETELEMETRY_26_001: [**The function shall add diagnostic information as AMQP message annotation.**]**

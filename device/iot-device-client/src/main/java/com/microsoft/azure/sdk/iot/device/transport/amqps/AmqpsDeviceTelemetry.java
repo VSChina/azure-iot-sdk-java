@@ -314,11 +314,16 @@ public final class AmqpsDeviceTelemetry extends AmqpsDeviceOperations
             outgoingMessage.setApplicationProperties(applicationProperties);
         }
 
-        if (message.getDiagnosticPropertyData() != null) {
-            // Codes_SRS_AMQPSDEVICETELEMETRY_13_001: [The function shall add diagnostic information as AMQP message annotation.]
-            Map<Symbol, Object> annotationMap = new HashMap<>();
-            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_ID_KEY), message.getDiagnosticPropertyData().getDiagnosticId());
-            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_CONTEXT_KEY), message.getDiagnosticPropertyData().getCorrelationContext());
+        if (message.getDiagnosticId() != null && message.getDiagnosticCorrelationContext() != null) {
+            // Codes_SRS_AMQPSDEVICETELEMETRY_26_001: [The function shall add diagnostic information as AMQP message annotation.]
+            Map<Symbol, Object> annotationMap;
+            if (outgoingMessage.getMessageAnnotations() == null) {
+                annotationMap = new HashMap<Symbol, Object>();
+            } else {
+                annotationMap = outgoingMessage.getMessageAnnotations().getValue();
+            }
+            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_ID_KEY), message.getDiagnosticId());
+            annotationMap.put(Symbol.getSymbol(AMQP_DIAGNOSTIC_CONTEXT_KEY), message.getDiagnosticCorrelationContext());
             outgoingMessage.setMessageAnnotations(new MessageAnnotations(annotationMap));
         }
 

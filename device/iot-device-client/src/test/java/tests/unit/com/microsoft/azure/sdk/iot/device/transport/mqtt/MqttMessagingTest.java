@@ -327,7 +327,9 @@ public class MqttMessagingTest
                 result = expectedCorrelationId;
                 mockMessage.getMessageId();
                 result = expectedMessageId;
-                mockMessage.getDiagnosticPropertyData();
+                mockMessage.getDiagnosticId();
+                result = null;
+                mockMessage.getDiagnosticCorrelationContext();
                 result = null;
             }
         };
@@ -532,7 +534,9 @@ public class MqttMessagingTest
                 mockMessage.getMessageId();
                 result = messageidValue;
                 Deencapsulation.invoke(mockMqtt, "publish", anyString, messageBody);
-                mockMessage.getDiagnosticPropertyData();
+                mockMessage.getDiagnosticId();
+                result = null;
+                mockMessage.getDiagnosticCorrelationContext();
                 result = null;
             }
         };

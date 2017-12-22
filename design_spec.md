@@ -26,11 +26,16 @@ The following table describes the names and format of diagnostic related propert
 | hop * it is necessary only in gateway scenario, not covered in current implementation.                                                                               | The number of nodes/services that the message pass thru | Integer string        | “2”                        |
 
 #### 2.Dianostic setting
-We provide 2 ways to set the diagnostic settings(sampling percentage). The first way is to set locally in code. The second is fetch from device twin. Here gives the data structure of device twin:
+We provide 2 ways to set the diagnostic settings(sampling percentage). The first way is to set locally in code. The second is fetch from device twin. Here gives the data structure of desired twin:
 
     {
-      diag_enable: 'true|false',
-      diag_sample_rate: '0-100'
+      _diag_sample_rate: '0-100'
+    }
+
+And after the device side get the desired twin, it will set related value and report the settings applied to the device.
+    {
+       _diag_sample_rate: <CURRENT VALUE ON DEVICE>,
+       _diag_info: <ERROR MESSAGE IF DESIRED TWIN INVALID>
     }
 
 ### Interface and class
@@ -39,13 +44,12 @@ We provide 2 ways to set the diagnostic settings(sampling percentage). The first
         // To provide function of diagnostics
         private DeviceClientDiagnostic deviceDiagnostic;
 
-        // A flag to make sure enableDiagnostics only be called once.
-        private boolean diagnosticAlreadyEnabled; 
-
         // Calling enableDiagnostics with a parameter will set diagnostic setting from local
         public void enableDiagnostics(int percentage);
 
         // Calling enableDiagnostics without a parameter will set diagnostic setting from cloud(device twin)
+        // If twin is not started, it will start a device twin with empty callback.
+        // Then it will subscribe to desired key: _diag_sample_rate.
         public void enableDiagnostics();
     }
 
@@ -57,8 +61,20 @@ We provide 2 ways to set the diagnostic settings(sampling percentage). The first
         public DeviceClientDiagnostic();
         public int getDiagSamplingPercentage();
         public void setDiagSamplingPercentage(int diagSamplingPercentage);
+        
+        // Callback of desired twin property "_diag_sample_rate" update.
+        // It will read the twin value. If valid, update sampling rate. If not, prepare error message.
+        // Then it will send reported properties to report current applied sampling rate and error message.
+        /**
+         * It will start a new thread to update reported properties.
+         * If update reported properties in the same thread of desired property callback, the addMessage will wait for the same lock
+         * of invokeCallbacks(in MqttTransport) and cause dead lock.
+         */
+        public PropertyCallBack<String, Object> twinPropertyCallback;
 
-        // To decide if this message would attach diagnostic information
+        // To decide if this message would attach diagnostic information.
+        // For example, if sampling rate is 80, then every 8 of 10 messages will attach diagnostic information.
+        // We would like to have stable behavior so we won't use random possibility to handle this part.
         public void addDiagnosticInfoIfNecessary(Message message);
     }
 

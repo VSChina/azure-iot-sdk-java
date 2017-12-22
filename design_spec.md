@@ -33,9 +33,10 @@ We provide 2 ways to set the diagnostic settings(sampling percentage). The first
     }
 
 And after the device side get the desired twin, it will set related value and report the settings applied to the device.
+
     {
-       _diag_sample_rate: <CURRENT VALUE ON DEVICE>,
-       _diag_info: <ERROR MESSAGE IF DESIRED TWIN INVALID>
+      _diag_sample_rate: '<CURRENT VALUE ON DEVICE>',
+      _diag_info: '<ERROR MESSAGE IF DESIRED TWIN INVALID>'
     }
 
 ### Interface and class

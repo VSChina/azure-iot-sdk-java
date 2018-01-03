@@ -61,13 +61,13 @@ Here're flow chart for user journey. If user does not use twin in their code, we
         // To provide function of diagnostics
         private DeviceClientDiagnostic deviceDiagnostic;
 
-        // Calling enableDiagnostics with a parameter will set diagnostic setting from local
-        public void enableDiagnostics(int percentage);
+        // Calling enableDiagnosticsFromLocalSetting will set diagnostic setting from local
+        public void enableDiagnosticsFromLocalSetting(int percentage);
 
-        // Calling enableDiagnostics without a parameter will set diagnostic setting from cloud(device twin)
+        // Calling enableDiagnosticsFromCloudSetting will set diagnostic setting from cloud(device twin)
         // If twin is not started, it will start a device twin with empty callback.
         // Then it will subscribe to desired key: _diag_sample_rate.
-        public void enableDiagnostics();
+        public void enableDiagnosticsFromCloudSetting();
     }
 
     class DeviceClientDiagnostic

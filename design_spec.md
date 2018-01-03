@@ -17,7 +17,7 @@ The following table describes the names and format of diagnostic related propert
 
 | System Property Name | MQTT Property Name | Property Purpose                          | Property Value Format                                    | Property Value Sample                        |
 |----------------------|--------------------|-------------------------------------------|----------------------------------------------------------|----------------------------------------------|
-| diag-id              | $.diagid           | Track the message in consequent flow      | 8 characters, [a-z0-9]8                                  | "8cd869z4"                                   |
+| Diagnostic-Id              | $.diagid           | Track the message in consequent flow      | 8 characters, [a-z0-9]8                                  | "8cd869z4"                                   |
 | Correlation-Context  | $.diagctx             | Context contains multiple key-value pairs | Comma separated list of key-value, it is RFC2396 encoded | “creationtimeutc=2017-02-22T01:01:01Z,hop=2” |
 
 | ﻿Property Name in Correlation-Context                                               | Property Purpose                                        | Property Value Format | Property Value Sample      |  
@@ -38,6 +38,18 @@ And after the device side get the desired twin, it will set related value and re
       _diag_sample_rate: '<CURRENT VALUE ON DEVICE>',
       _diag_info: '<ERROR MESSAGE IF DESIRED TWIN INVALID>'
     }
+
+### Flow
+If user call DeviceClient.enableDiagnostics(), that means we will start a device twin and subscribe to desired property "_diag_sample_rate". The DeviceTwin instance in DeviceClient provides the function for device twin. Here are several features about the DeviceTwin instance.
+1. DeviceTwin has **ONLY ONE** status callback/ context, generic callback/ context. They are set in the constructor and can not be changed.
+2. DeviceTwin has a property callback map where user can add multiple callbacks for specific key.
+3. If defines more than one DeviceTwin instances in DeviceClient, they will conflict.
+
+In order not to conflict with user's device twin callbacks, we will make some changes to the DeviceTwin class, **add setters for status callback/ context, generic callback/ context**.
+
+Here're flow chart for user journey. If user does not use twin in their code, we will instantiate a new DeviceTwin instance. If user uses twin, according to the sequence of calling enableDiagnostics() and startDeviceTwin(), the logic will be slightly different.
+![](./enable_diagnostics.svg)
+![](./start_device_twin.svg)
 
 ### Interface and class
     class DeviceClient

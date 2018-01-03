@@ -49,9 +49,11 @@ In order not to conflict with user's device twin callbacks, we will make some ch
 
 Here're flow chart for user journey. If user does not use twin in their code, we will instantiate a new DeviceTwin instance. If user uses twin, according to the sequence of calling enableDiagnostics() and startDeviceTwin(), the logic will be slightly different.
 
-![](./enable_diagnostics.png)
-
+#### Flow of startDeviceTwin()
 ![](./start_device_twin.png)
+
+#### Flow of enableDiagnostics()
+![](./enable_diagnostics.png)
 
 ### Interface and class
     class DeviceClient

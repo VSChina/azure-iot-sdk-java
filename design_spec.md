@@ -48,8 +48,8 @@ If user call DeviceClient.enableDiagnostics(), that means we will start a device
 In order not to conflict with user's device twin callbacks, we will make some changes to the DeviceTwin class, **add setters for status callback/ context, generic callback/ context**.
 
 Here're flow chart for user journey. If user does not use twin in their code, we will instantiate a new DeviceTwin instance. If user uses twin, according to the sequence of calling enableDiagnostics() and startDeviceTwin(), the logic will be slightly different.
-![](./enable_diagnostics.svg)
-![](./start_device_twin.svg)
+![](./enable_diagnostics.png)
+![](./start_device_twin.png)
 
 ### Interface and class
     class DeviceClient
